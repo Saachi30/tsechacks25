@@ -146,12 +146,7 @@ const MainLayout = () => {
         {/* Top Bar */}
         <div className="bg-white h-16 border-b flex items-center justify-between px-6 flex-shrink-0">
           <div className="flex items-center w-96">
-            <Search className="text-gray-400 w-5 h-5" />
-            <input
-              type="text"
-              placeholder="Search music, artists, or rights..."
-              className="ml-2 w-full outline-none text-sm"
-            />
+           
           </div>
           
           <div className="flex items-center space-x-4">

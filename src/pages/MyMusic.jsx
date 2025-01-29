@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { ethers } from 'ethers';
+import music from '../assets/music.png'
 import abi from '../abi.json'
 const contractABI = abi;
 const contractAddress =  "0x8Ab34d6DE6Bc0144b18183d5ff6B530DE1a95638";
@@ -64,10 +65,12 @@ export const MyMusic = () => {
   };
 
   return (
-    <div className="p-6 space-y-6 bg-gray-50 min-h-screen">
+    <div className="p-6 space-y-6 bg-blue-50 min-h-screen">
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">My Music</h1>
+        <h1 className="text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-800 to-purple-800">
+              My Music
+            </h1>
           <p className="text-gray-600">Manage your music rights and collaborations</p>
         </div>
         <button className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors">
@@ -80,7 +83,7 @@ export const MyMusic = () => {
           <div key={track.id} className="bg-white rounded-xl shadow-sm p-6 transition-all hover:shadow-md">
             <div className="flex items-center space-x-6">
               <img
-                src="/api/placeholder/200/200"
+                src={music}
                 alt={track.title}
                 className="w-24 h-24 rounded-lg object-cover"
               />
