@@ -70,11 +70,32 @@ const navigationItems = [
   { id: 'settings', path: '/settings', label: 'Settings', icon: <Settings className="w-5 h-5" /> }
 ];
 
+
 // Main Layout Component
 const MainLayout = () => {
   const location = useLocation();
   const [user, setUser] = useState(null);
+  const [showFullAddress, setShowFullAddress] = useState(false);
+  const [account, setAccount] = useState(null);
+  const [contract, setContract] = useState(null);
 
+  const connectWallet = async () => {
+    // try {
+    //     const provider = new ethers.providers.Web3Provider(window.ethereum);
+    //     const accounts = await provider.send("eth_requestAccounts", []);
+    //     setAccount(accounts[0]);
+
+    //     const contractInstance = new ethers.Contract(
+    //         CONTRACT_ADDRESS,
+    //         abi,
+    //         provider.getSigner()
+    //     );
+    //     setContract(contractInstance);
+    //     toast.success("Wallet connected successfully!");
+    // } catch (error) {
+    //     toast.error("Failed to connect wallet");
+    // }
+};
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       setUser(user);
@@ -135,9 +156,21 @@ const MainLayout = () => {
             <button className="p-2 hover:bg-gray-100 rounded-full">
               <Bell className="w-5 h-5 text-gray-600" />
             </button>
-            <button className="p-2 hover:bg-gray-100 rounded-full">
-              <Wallet className="w-5 h-5 text-gray-600" />
-            </button>
+            {/* Wallet Button */}
+            <button
+                    onClick={connectWallet}
+                    className="relative p-2 hover:bg-gray-100 rounded-full"
+                    onMouseEnter={() => setShowFullAddress(true)}
+                    onMouseLeave={() => setShowFullAddress(false)}
+                >
+                    <Wallet className="w-5 h-5 text-gray-600" />
+                    
+                    {account && showFullAddress && (
+                        <div className="absolute bg-slate-500/50 text-gray-800 px-3 py-1 rounded-lg shadow-lg top-10 left-1/4 transform -translate-x-1/2">
+                            {account}
+                        </div>
+                    )}
+                </button>
             <div className="relative">
               <button
                 onClick={handleLogout}
