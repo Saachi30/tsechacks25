@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Upload } from 'lucide-react';
 import { auth, db } from '../components/firebase';
-import { collection, query, where, getDocs, addDoc } from 'firebase/firestore';
+import { collection, query, where, getDocs, addDoc,updateDoc, doc } from 'firebase/firestore';
 import { ethers } from 'ethers';
 
 // ABI can be imported from a separate file in practice
@@ -152,7 +152,6 @@ export const UploadMusic = () => {
       const ipfsHash = data.IpfsHash;
       const fileURL = `https://gateway.pinata.cloud/ipfs/${ipfsHash}`;
 
-      // Register music on blockchain
       await registerMusicOnChain(ipfsHash);
 
       const songMetadata = {
@@ -168,11 +167,10 @@ export const UploadMusic = () => {
       };
 
       const songsCollection = collection(db, 'songs');
-      await addDoc(songsCollection, songMetadata);
+      const songDoc = await addDoc(songsCollection, songMetadata);
+      await updateArtistPlaylists(songDoc.id, Object.keys(formData.artists));
 
       setSuccess('File uploaded and registered on blockchain successfully!');
-      console.log('File URL:', fileURL);
-
       setFile(null);
       setFormData({
         songName: '',
@@ -181,12 +179,35 @@ export const UploadMusic = () => {
         collaborators: [],
         royaltySplits: []
       });
-
     } catch (err) {
       setError(err.message || 'Failed to upload and register file');
-      console.error('Upload error:', err);
     } finally {
       setUploading(false);
+    }
+  };
+
+  const updateArtistPlaylists = async (songId, artistIds) => {
+    try {
+      const updatePromises = artistIds.map(async (artistId) => {
+        const userRef = doc(db, 'Users', artistId);
+        const userDoc = await getDocs(query(collection(db, 'Users'), where('__name__', '==', artistId)));
+        
+        if (!userDoc.empty) {
+          const userData = userDoc.docs[0].data();
+          const currentPlaylist = userData.playlist || [];
+          
+          if (!currentPlaylist.includes(songId)) {
+            await updateDoc(userRef, {
+              playlist: [...currentPlaylist, songId]
+            });
+          }
+        }
+      });
+
+      await Promise.all(updatePromises);
+    } catch (error) {
+      console.error('Error updating artist playlists:', error);
+      throw new Error('Failed to update artist playlists');
     }
   };
 

@@ -25,6 +25,7 @@ import { Issues } from './pages/Issues';
 import { Crowdfunding } from './pages/Crowdfunding';
 import { Collaborators } from './pages/Collaborators';
 import { UploadMusic } from './pages/UploadMusic';
+import LicenseManager from './pages/LicenseManager';
 import Login from './components/login';
 import Register from './components/register';
 
@@ -64,6 +65,7 @@ const navigationItems = [
   { id: 'upload', path: '/upload', label: 'Upload Music', icon: <Upload className="w-5 h-5" /> },
   { id: 'rights', path: '/rights', label: 'Rights Management', icon: <Shield className="w-5 h-5" /> },
   { id: 'collaborators', path: '/collaborators', label: 'Collaborators', icon: <Users className="w-5 h-5" /> },
+  { id: 'license-manager', path: '/license-manager', label: 'License Manager', icon: <Shield className="w-5 h-5" /> },
   { id: 'crowdfunding', path: '/crowdfunding', label: 'Crowdfunding', icon: <Target className="w-5 h-5" /> },
   { id: 'streaming', path: '/streaming', label: 'Streaming', icon: <Radio className="w-5 h-5" /> },
   { id: 'issues', path: '/issues', label: 'Issues', icon: <AlertTriangle className="w-5 h-5" /> },
@@ -190,6 +192,7 @@ const MainLayout = () => {
             <Route path="/upload" element={<UploadMusic />} />
             <Route path="/rights" element={<RightsManagement />} />
             <Route path="/collaborators" element={<Collaborators />} />
+            <Route path="/license-manager" element={<LicenseManager />} />
             <Route path="/crowdfunding" element={<Crowdfunding />} />
             <Route path="/streaming" element={<Streaming />} />
             <Route path="/issues" element={<Issues />} />
