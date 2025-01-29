@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
 import { Upload } from 'lucide-react';
-import { getFirestore, collection, addDoc } from 'firebase/firestore';
+import { auth, db } from '../components/firebase';
+import { collection, query, where, getDocs, addDoc } from 'firebase/firestore';
 
 export const UploadMusic = () => {
   const [formData, setFormData] = useState({
     songName: '',
-    artists: [''],  // Initialize with one empty artist field
+    artists: {},
     genre: '',
     collaborators: [],
     royaltySplits: []
@@ -15,24 +16,55 @@ export const UploadMusic = () => {
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const [artistEmail, setArtistEmail] = useState('');
+  const [artistRole, setArtistRole] = useState('');
+  const [roleOptions] = useState(['composer', 'musician', 'writer']);
 
-  const handleArtistChange = (index, value) => {
-    const newArtists = [...formData.artists];
-    newArtists[index] = value;
-    setFormData({ ...formData, artists: newArtists });
+  const handleArtistChange = (email, role) => {
+    setFormData({ ...formData, artists: { ...formData.artists, [email]: role } });
   };
 
-  const addArtistField = () => {
-    setFormData({ ...formData, artists: [...formData.artists, ''] });
-  };
+  const addArtistField = async () => {
+    if (!artistEmail || !artistRole) {
+      setError('Please enter both email and role');
+      return;
+    }
 
-  const removeArtistField = (index) => {
-    const newArtists = formData.artists.filter((_, i) => i !== index);
-    setFormData({ ...formData, artists: newArtists });
+    try {
+      const usersCollection = collection(db, 'Users');
+      const q = query(usersCollection, where('email', '==', artistEmail));
+      const querySnapshot = await getDocs(q);
+
+      if (!querySnapshot.empty) {
+        const userId = querySnapshot.docs[0].id;
+        handleArtistChange(userId, artistRole);
+        setArtistEmail('');
+        setArtistRole('');
+        setError(''); // Clear any existing errors
+      } else {
+        setError('User does not exist');
+      }
+    } catch (err) {
+      setError('Failed to add artist');
+      console.error('Error adding artist:', err);
+    }
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    
+    // Validate required fields
+    if (!formData.songName || !formData.genre) {
+      setError('Please fill in all required fields');
+      return;
+    }
+
+    // Check if at least one artist has been added
+    if (Object.keys(formData.artists).length === 0) {
+      setError('Please add at least one artist');
+      return;
+    }
+
     if (!file) {
       setError('Please select a file to upload');
       return;
@@ -62,20 +94,18 @@ export const UploadMusic = () => {
       const data = await response.json();
       const fileURL = `https://gateway.pinata.cloud/ipfs/${data.IpfsHash}`;
 
-      // Store metadata in Firestore
       const songMetadata = {
         name: file.name,
         url: fileURL,
         ipfsHash: data.IpfsHash,
         uploadedAt: new Date().toLocaleString(),
         songName: formData.songName,
-        artists: formData.artists.filter(artist => artist.trim() !== ''),
+        artists: formData.artists,
         genre: formData.genre,
         collaborators: [],
         royaltySplits: []
       };
 
-      const db = getFirestore();
       const songsCollection = collection(db, 'songs');
       await addDoc(songsCollection, songMetadata);
 
@@ -85,7 +115,7 @@ export const UploadMusic = () => {
       setFile(null);
       setFormData({
         songName: '',
-        artists: [''],
+        artists: {},  // Reset artists as well
         genre: '',
         collaborators: [],
         royaltySplits: []
@@ -118,7 +148,6 @@ export const UploadMusic = () => {
             </div>
           )}
 
-          {/* Song Name Input */}
           <div>
             <label className="block text-sm font-medium text-gray-700">
               Song Name
@@ -132,42 +161,55 @@ export const UploadMusic = () => {
             />
           </div>
 
-          {/* Artists Input Fields */}
           <div>
             <label className="block text-sm font-medium text-gray-700">
               Artists
             </label>
-            {formData.artists.map((artist, index) => (
+            <div className="flex gap-2 mt-2">
+              <input
+                type="email"
+                value={artistEmail}
+                onChange={(e) => setArtistEmail(e.target.value)}
+                className="flex-1 rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                placeholder="Artist email"
+              />
+              <select
+                value={artistRole}
+                onChange={(e) => setArtistRole(e.target.value)}
+                className="flex-1 rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+              >
+                <option value="">Select Role</option>
+                {roleOptions.map(role => (
+                  <option key={role} value={role}>{role}</option>
+                ))}
+              </select>
+              <button
+                type="button"
+                onClick={addArtistField}
+                className="px-3 py-2 text-blue-600 hover:text-blue-800"
+              >
+                Add
+              </button>
+            </div>
+            {Object.keys(formData.artists).map((email, index) => (
               <div key={index} className="flex gap-2 mt-2">
-                <input
-                  type="text"
-                  value={artist}
-                  onChange={(e) => handleArtistChange(index, e.target.value)}
-                  className="flex-1 rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                  placeholder="Artist name"
-                  required
-                />
-                {formData.artists.length > 1 && (
-                  <button
-                    type="button"
-                    onClick={() => removeArtistField(index)}
-                    className="px-3 py-2 text-red-600 hover:text-red-800"
-                  >
-                    Remove
-                  </button>
-                )}
+                <span>{email}</span>
+                <span>{formData.artists[email]}</span>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const newArtists = { ...formData.artists };
+                    delete newArtists[email];
+                    setFormData({ ...formData, artists: newArtists });
+                  }}
+                  className="px-3 py-2 text-red-600 hover:text-red-800"
+                >
+                  Remove
+                </button>
               </div>
             ))}
-            <button
-              type="button"
-              onClick={addArtistField}
-              className="mt-2 text-sm text-blue-600 hover:text-blue-800"
-            >
-              + Add Another Artist
-            </button>
           </div>
 
-          {/* Genre Input */}
           <div>
             <label className="block text-sm font-medium text-gray-700">
               Genre
@@ -207,7 +249,7 @@ export const UploadMusic = () => {
 
           <button
             type="submit"
-            disabled={uploading || !file}
+            disabled={uploading}
             className="w-full px-4 py-2 text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed"
           >
             {uploading ? 'Uploading...' : 'Upload to IPFS'}
