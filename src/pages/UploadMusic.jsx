@@ -2,6 +2,35 @@ import React, { useState } from 'react';
 import { Upload } from 'lucide-react';
 import { auth, db } from '../components/firebase';
 import { collection, query, where, getDocs, addDoc } from 'firebase/firestore';
+import { ethers } from 'ethers';
+
+// ABI can be imported from a separate file in practice
+const CONTRACT_ADDRESS = "0x8Ab34d6DE6Bc0144b18183d5ff6B530DE1a95638";
+const CONTRACT_ABI = [
+  {
+    "inputs": [
+      {
+        "internalType": "string",
+        "name": "_title",
+        "type": "string"
+      },
+      {
+        "internalType": "string",
+        "name": "_genre",
+        "type": "string"
+      },
+      {
+        "internalType": "string",
+        "name": "_ipfsHash",
+        "type": "string"
+      }
+    ],
+    "name": "registerMusic",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  }
+];
 
 export const UploadMusic = () => {
   const [formData, setFormData] = useState({
@@ -40,7 +69,7 @@ export const UploadMusic = () => {
         handleArtistChange(userId, artistRole);
         setArtistEmail('');
         setArtistRole('');
-        setError(''); // Clear any existing errors
+        setError('');
       } else {
         setError('User does not exist');
       }
@@ -50,16 +79,44 @@ export const UploadMusic = () => {
     }
   };
 
+  const registerMusicOnChain = async (ipfsHash) => {
+    try {
+      if (!window.ethereum) {
+        throw new Error('Please install MetaMask to interact with the blockchain');
+      }
+
+      await window.ethereum.request({ method: 'eth_requestAccounts' });
+      const provider = new ethers.providers.Web3Provider(window.ethereum);
+      const signer = provider.getSigner();
+      
+      const contract = new ethers.Contract(
+        CONTRACT_ADDRESS,
+        CONTRACT_ABI,
+        signer
+      );
+
+      const tx = await contract.registerMusic(
+        formData.songName,
+        formData.genre,
+        ipfsHash
+      );
+
+      await tx.wait();
+      return true;
+    } catch (err) {
+      console.error('Blockchain error:', err);
+      throw new Error('Failed to register music on blockchain: ' + err.message);
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     
-    // Validate required fields
     if (!formData.songName || !formData.genre) {
       setError('Please fill in all required fields');
       return;
     }
 
-    // Check if at least one artist has been added
     if (Object.keys(formData.artists).length === 0) {
       setError('Please add at least one artist');
       return;
@@ -88,16 +145,20 @@ export const UploadMusic = () => {
       });
 
       if (!response.ok) {
-        throw new Error('Upload failed');
+        throw new Error('IPFS upload failed');
       }
 
       const data = await response.json();
-      const fileURL = `https://gateway.pinata.cloud/ipfs/${data.IpfsHash}`;
+      const ipfsHash = data.IpfsHash;
+      const fileURL = `https://gateway.pinata.cloud/ipfs/${ipfsHash}`;
+
+      // Register music on blockchain
+      await registerMusicOnChain(ipfsHash);
 
       const songMetadata = {
         name: file.name,
         url: fileURL,
-        ipfsHash: data.IpfsHash,
+        ipfsHash: ipfsHash,
         uploadedAt: new Date().toLocaleString(),
         songName: formData.songName,
         artists: formData.artists,
@@ -109,20 +170,20 @@ export const UploadMusic = () => {
       const songsCollection = collection(db, 'songs');
       await addDoc(songsCollection, songMetadata);
 
-      setSuccess('File uploaded successfully!');
+      setSuccess('File uploaded and registered on blockchain successfully!');
       console.log('File URL:', fileURL);
 
       setFile(null);
       setFormData({
         songName: '',
-        artists: {},  // Reset artists as well
+        artists: {},
         genre: '',
         collaborators: [],
         royaltySplits: []
       });
 
     } catch (err) {
-      setError(err.message || 'Failed to upload file');
+      setError(err.message || 'Failed to upload and register file');
       console.error('Upload error:', err);
     } finally {
       setUploading(false);
@@ -252,7 +313,7 @@ export const UploadMusic = () => {
             disabled={uploading}
             className="w-full px-4 py-2 text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed"
           >
-            {uploading ? 'Uploading...' : 'Upload to IPFS'}
+            {uploading ? 'Uploading...' : 'Upload to IPFS & Register'}
           </button>
         </div>
       </form>
