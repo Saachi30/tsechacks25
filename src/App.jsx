@@ -1,5 +1,5 @@
-import React from 'react';
-import { useState } from "react";
+// App.js
+import React, { useEffect, useState } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { 
   Music2, 
@@ -8,7 +8,6 @@ import {
   Shield,
   Radio,
   AlertTriangle,
-  DollarSign,
   Settings,
   Search,
   Bell,
@@ -16,6 +15,8 @@ import {
   Target,
   Home
 } from 'lucide-react';
+import { auth } from './components/firebase';
+import { onAuthStateChanged } from 'firebase/auth';
 import Dashboard from './pages/Dashboard';
 import { MyMusic } from './pages/MyMusic';
 import { RightsManagement } from './pages/RightsManagement';
@@ -24,42 +25,71 @@ import { Issues } from './pages/Issues';
 import { Crowdfunding } from './pages/Crowdfunding';
 import { Collaborators } from './pages/Collaborators';
 import { UploadMusic } from './pages/UploadMusic';
-// Main App Layout Component
-const AppContent = () => {
+import Login from './components/login';
+import Register from './components/register';
+
+// Protected Route Component
+const ProtectedRoute = ({ children }) => {
+  const [loading, setLoading] = useState(true);
+  const [user, setUser] = useState(null);
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      setUser(user);
+      setLoading(false);
+    });
+
+    return () => unsubscribe();
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return <Navigate to="/" replace />;
+  }
+
+  return children;
+};
+
+// Navigation Items
+const navigationItems = [
+  { id: 'dashboard', path: '/dashboard', label: 'Dashboard', icon: <Home className="w-5 h-5" /> },
+  { id: 'my-music', path: '/mymusic', label: 'My Music', icon: <Music2 className="w-5 h-5" /> },
+  { id: 'upload', path: '/upload', label: 'Upload Music', icon: <Upload className="w-5 h-5" /> },
+  { id: 'rights', path: '/rights', label: 'Rights Management', icon: <Shield className="w-5 h-5" /> },
+  { id: 'collaborators', path: '/collaborators', label: 'Collaborators', icon: <Users className="w-5 h-5" /> },
+  { id: 'crowdfunding', path: '/crowdfunding', label: 'Crowdfunding', icon: <Target className="w-5 h-5" /> },
+  { id: 'streaming', path: '/streaming', label: 'Streaming', icon: <Radio className="w-5 h-5" /> },
+  { id: 'issues', path: '/issues', label: 'Issues', icon: <AlertTriangle className="w-5 h-5" /> },
+  { id: 'settings', path: '/settings', label: 'Settings', icon: <Settings className="w-5 h-5" /> }
+];
+
+// Main Layout Component
+const MainLayout = () => {
   const location = useLocation();
-  
-  const navigationItems = [
-    { id: 'dashboard', path: '/', label: 'Dashboard', icon: <Home className="w-5 h-5" /> },
-    { id: 'my-music', path: '/mymusic', label: 'My Music', icon: <Music2 className="w-5 h-5" /> },
-    { id: 'upload', path: '/upload', label: 'Upload Music', icon: <Upload className="w-5 h-5" /> },
-    { id: 'rights', path: '/rights', label: 'Rights Management', icon: <Shield className="w-5 h-5" /> },
-    { id: 'collaborators', path: '/collaborators', label: 'Collaborators', icon: <Users className="w-5 h-5" /> },
-    { id: 'crowdfunding', path: '/crowdfunding', label: 'Crowdfunding', icon: <Target className="w-5 h-5" /> },
-    { id: 'streaming', path: '/streaming', label: 'Streaming', icon: <Radio className="w-5 h-5" /> },
-    { id: 'issues', path: '/issues', label: 'Issues', icon: <AlertTriangle className="w-5 h-5" /> },
-    { id: 'settings', path: '/settings', label: 'Settings', icon: <Settings className="w-5 h-5" /> }
-  ];
+  const [user, setUser] = useState(null);
 
-  const [showFullAddress, setShowFullAddress] = useState(false);
-  const [account, setAccount] = useState(null);
-  const [contract, setContract] = useState(null);
-    const connectWallet = async () => {
-        // try {
-        //     const provider = new ethers.providers.Web3Provider(window.ethereum);
-        //     const accounts = await provider.send("eth_requestAccounts", []);
-        //     setAccount(accounts[0]);
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      setUser(user);
+    });
 
-        //     const contractInstance = new ethers.Contract(
-        //         CONTRACT_ADDRESS,
-        //         abi,
-        //         provider.getSigner()
-        //     );
-        //     setContract(contractInstance);
-        //     toast.success("Wallet connected successfully!");
-        // } catch (error) {
-        //     toast.error("Failed to connect wallet");
-        // }
-    };
+    return () => unsubscribe();
+  }, []);
+
+  const handleLogout = async () => {
+    try {
+      await auth.signOut();
+    } catch (error) {
+      console.error("Error signing out:", error);
+    }
+  };
 
   return (
     <div className="flex h-screen overflow-hidden bg-gray-100">
@@ -71,15 +101,14 @@ const AppContent = () => {
           </div>
           <h1 className="text-xl font-bold text-white">MusicChain</h1>
         </div>
+        
         <nav className="mt-8 flex-1 overflow-y-auto">
           {navigationItems.map((item) => (
             <a
               key={item.id}
               href={item.path}
               className={`w-full flex items-center px-6 py-3 text-gray-300 hover:bg-[#1c2128] hover:text-white transition-colors ${
-                location.pathname === item.path
-                  ? 'bg-blue-600 hover:bg-blue-700 text-white'
-                  : ''
+                location.pathname === item.path ? 'bg-blue-600 hover:bg-blue-700 text-white' : ''
               }`}
             >
               <span className="mr-3">{item.icon}</span>
@@ -101,34 +130,29 @@ const AppContent = () => {
               className="ml-2 w-full outline-none text-sm"
             />
           </div>
+          
           <div className="flex items-center space-x-4">
             <button className="p-2 hover:bg-gray-100 rounded-full">
               <Bell className="w-5 h-5 text-gray-600" />
             </button>
-            {/* Wallet Button */}
-            <button
-                    onClick={connectWallet}
-                    className="relative p-2 hover:bg-gray-100 rounded-full"
-                    onMouseEnter={() => setShowFullAddress(true)}
-                    onMouseLeave={() => setShowFullAddress(false)}
-                >
-                    <Wallet className="w-5 h-5 text-gray-600" />
-                    
-                    {account && showFullAddress && (
-                        <div className="absolute bg-slate-500/50 text-gray-800 px-3 py-1 rounded-lg shadow-lg top-10 left-1/4 transform -translate-x-1/2">
-                            {account}
-                        </div>
-                    )}
-                </button>
-
-            <div className="w-8 h-8 bg-blue-500 rounded-full"></div>
+            <button className="p-2 hover:bg-gray-100 rounded-full">
+              <Wallet className="w-5 h-5 text-gray-600" />
+            </button>
+            <div className="relative">
+              <button
+                onClick={handleLogout}
+                className="px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded"
+              >
+                Logout
+              </button>
+            </div>
           </div>
         </div>
 
         {/* Page Content */}
         <div className="flex-1 overflow-auto">
           <Routes>
-            <Route path="/" element={<Dashboard />} />
+            <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/mymusic" element={<MyMusic />} />
             <Route path="/upload" element={<UploadMusic />} />
             <Route path="/rights" element={<RightsManagement />} />
@@ -136,8 +160,7 @@ const AppContent = () => {
             <Route path="/crowdfunding" element={<Crowdfunding />} />
             <Route path="/streaming" element={<Streaming />} />
             <Route path="/issues" element={<Issues />} />
-            {/* <Route path="/settings" element={<Settings />} /> */}
-            <Route path="*" element={<Navigate to="/" replace />} />
+            <Route path="*" element={<Navigate to="/dashboard" replace />} />
           </Routes>
         </div>
       </div>
@@ -145,11 +168,68 @@ const AppContent = () => {
   );
 };
 
-// Main App component that provides Router context
+// Public Routes Component
+const PublicRoute = ({ children }) => {
+  const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      setUser(user);
+      setLoading(false);
+    });
+
+    return () => unsubscribe();
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
+      </div>
+    );
+  }
+
+  if (user) {
+    return <Navigate to="/dashboard" replace />;
+  }
+
+  return children;
+};
+
+// Main App Component
 const App = () => {
   return (
     <Router>
-      <AppContent />
+      <Routes>
+        {/* Public Routes */}
+        <Route
+          path="/"
+          element={
+            <PublicRoute>
+              <Login />
+            </PublicRoute>
+          }
+        />
+        <Route
+          path="/register"
+          element={
+            <PublicRoute>
+              <Register />
+            </PublicRoute>
+          }
+        />
+        
+        {/* Protected Routes */}
+        <Route
+          path="/*"
+          element={
+            <ProtectedRoute>
+              <MainLayout />
+            </ProtectedRoute>
+          }
+        />
+      </Routes>
     </Router>
   );
 };
