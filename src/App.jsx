@@ -25,6 +25,7 @@ import { Issues } from './pages/Issues';
 import { Crowdfunding } from './pages/Crowdfunding';
 import { Collaborators } from './pages/Collaborators';
 import { UploadMusic } from './pages/UploadMusic';
+import GTranslate from './components/GTranslate';
 import LicenseManager from './pages/LicenseManager';
 import Login from './components/login';
 import Register from './components/register';
@@ -168,6 +169,7 @@ const MainLayout = () => {
                         </div>
                     )}
                 </button>
+                <GTranslate/>
             <div className="relative">
               <button
                 onClick={handleLogout}

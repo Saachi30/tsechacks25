@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { ethers } from 'ethers';
 import music from '../assets/music.png'
+import { useNavigate } from "react-router-dom";
 import abi from '../abi.json'
 const contractABI = abi;
 const contractAddress =  "0x8Ab34d6DE6Bc0144b18183d5ff6B530DE1a95638";
 
 export const MyMusic = () => {
+  const navigate = useNavigate();
   const [tracks, setTracks] = useState([]);
   const [selectedTrack, setSelectedTrack] = useState(null);
   const [showDetails, setShowDetails] = useState(false);
@@ -73,41 +75,42 @@ export const MyMusic = () => {
             </h1>
           <p className="text-gray-600">Manage your music rights and collaborations</p>
         </div>
-        <button className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors">
+        <button className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors"onClick={() => navigate("/upload")}>
           Register New Track
         </button>
       </div>
 
       <div className="grid grid-cols-1 gap-4">
         {tracks.map((track) => (
-          <div key={track.id} className="bg-white rounded-xl shadow-sm p-6 transition-all hover:shadow-md">
+          <div key={track.id} className="bg-white rounded-xl shadow-sm p-6 transition-all hover:shadow-md hover:scale-102 transition-transform duration-200">
             <div className="flex items-center space-x-6">
               <img
                 src={music}
                 alt={track.title}
                 className="w-24 h-24 rounded-lg object-cover"
               />
-              <div className="flex-1">
-                <h3 className="font-semibold text-xl text-gray-900">{track.title}</h3>
-                <div className="grid grid-cols-4 gap-6 mt-3">
-                  <div>
-                    <p className="text-sm text-gray-500">Genre</p>
-                    <p className="font-medium text-gray-900">{track.genre}</p>
+           <div className="flex-1 min-w-0">
+                    <h3 className="text-lg font-bold text-gray-800 mb-2">{track.title}</h3>
+                    <div className="grid grid-cols-4 gap-3">
+                      <div className="bg-gray-100 rounded-lg p-2 transform hover:scale-105 transition-transform duration-200">
+                        <p className="text-xs text-gray-500">Genre</p>
+                        <p className="font-semibold text-gray-900 text-sm truncate">{track.genre}</p>
+                      </div>
+                      <div className="bg-gray-100 rounded-lg p-2 transform hover:scale-105 transition-transform duration-200">
+                        <p className="text-xs text-gray-500">Artist</p>
+                        <p className="font-mono font-semibold text-gray-900 text-sm truncate">{formatAddress(track.artist)}</p>
+                      </div>
+                      <div className="bg-gray-100 rounded-lg p-2 transform hover:scale-105 transition-transform duration-200">
+                        <p className="text-xs text-gray-500">Collaborators</p>
+                        <p className="font-semibold text-gray-900 text-sm">{track.collaboratorCount}</p>
+                      </div>
+                      <div className="bg-gray-100 rounded-lg p-2 transform hover:scale-105 transition-transform duration-200">
+                        <p className="text-xs text-gray-500">Revenue</p>
+                        <p className="font-semibold text-gray-900 text-sm">{track.revenue} ETH</p>
+                      </div>
+                    </div>
                   </div>
-                  <div>
-                    <p className="text-sm text-gray-500">Artist</p>
-                    <p className="font-medium text-gray-900">{formatAddress(track.artist)}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-gray-500">Collaborators</p>
-                    <p className="font-medium text-gray-900">{track.collaboratorCount}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-gray-500">Revenue</p>
-                    <p className="font-medium text-gray-900">{track.revenue} ETH</p>
-                  </div>
-                </div>
-              </div>
+
               <div className="flex space-x-3">
                 <button 
                   className="px-4 py-2 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors text-gray-700"
