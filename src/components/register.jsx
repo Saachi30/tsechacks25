@@ -1,4 +1,3 @@
-// Register.js
 import { createUserWithEmailAndPassword } from "firebase/auth";
 import React, { useState } from "react";
 import { auth, db } from "./firebase";
@@ -24,6 +23,7 @@ function Register() {
           email: user.email,
           name: name,
           createdAt: new Date(),
+          playlist: [], // Initialize empty playlist array
         };
 
         // Store user data in Firestore
