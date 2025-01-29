@@ -1,4 +1,5 @@
 import React from 'react';
+import { useState } from "react";
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { 
   Music2, 
@@ -38,6 +39,27 @@ const AppContent = () => {
     { id: 'issues', path: '/issues', label: 'Issues', icon: <AlertTriangle className="w-5 h-5" /> },
     { id: 'settings', path: '/settings', label: 'Settings', icon: <Settings className="w-5 h-5" /> }
   ];
+
+  const [showFullAddress, setShowFullAddress] = useState(false);
+  const [account, setAccount] = useState(null);
+  const [contract, setContract] = useState(null);
+    const connectWallet = async () => {
+        // try {
+        //     const provider = new ethers.providers.Web3Provider(window.ethereum);
+        //     const accounts = await provider.send("eth_requestAccounts", []);
+        //     setAccount(accounts[0]);
+
+        //     const contractInstance = new ethers.Contract(
+        //         CONTRACT_ADDRESS,
+        //         abi,
+        //         provider.getSigner()
+        //     );
+        //     setContract(contractInstance);
+        //     toast.success("Wallet connected successfully!");
+        // } catch (error) {
+        //     toast.error("Failed to connect wallet");
+        // }
+    };
 
   return (
     <div className="flex h-screen overflow-hidden bg-gray-100">
@@ -83,9 +105,22 @@ const AppContent = () => {
             <button className="p-2 hover:bg-gray-100 rounded-full">
               <Bell className="w-5 h-5 text-gray-600" />
             </button>
-            <button className="p-2 hover:bg-gray-100 rounded-full">
-              <Wallet className="w-5 h-5 text-gray-600" />
-            </button>
+            {/* Wallet Button */}
+            <button
+                    onClick={connectWallet}
+                    className="relative p-2 hover:bg-gray-100 rounded-full"
+                    onMouseEnter={() => setShowFullAddress(true)}
+                    onMouseLeave={() => setShowFullAddress(false)}
+                >
+                    <Wallet className="w-5 h-5 text-gray-600" />
+                    
+                    {account && showFullAddress && (
+                        <div className="absolute bg-slate-500/50 text-gray-800 px-3 py-1 rounded-lg shadow-lg top-10 left-1/4 transform -translate-x-1/2">
+                            {account}
+                        </div>
+                    )}
+                </button>
+
             <div className="w-8 h-8 bg-blue-500 rounded-full"></div>
           </div>
         </div>
