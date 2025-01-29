@@ -70,6 +70,7 @@ const navigationItems = [
   { id: 'crowdfunding', path: '/crowdfunding', label: 'Crowdfunding', icon: <Target className="w-5 h-5" /> },
   { id: 'streaming', path: '/streaming', label: 'Streaming', icon: <Radio className="w-5 h-5" /> },
   { id: 'issues', path: '/issues', label: 'Issues', icon: <AlertTriangle className="w-5 h-5" /> },
+  
   { id: 'settings', path: '/settings', label: 'Settings', icon: <Settings className="w-5 h-5" /> }
 ];
 
