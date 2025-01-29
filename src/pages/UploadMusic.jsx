@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
-import { Upload, Play, Pause } from 'lucide-react';
-import { getFirestore, collection, addDoc, getDocs } from 'firebase/firestore';
+import React, { useState } from 'react';
+import { Upload } from 'lucide-react';
+import { getFirestore, collection, addDoc } from 'firebase/firestore';
 
 export const UploadMusic = () => {
   const [formData, setFormData] = useState({
@@ -15,7 +15,6 @@ export const UploadMusic = () => {
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
-  const [uploadedSongs, setUploadedSongs] = useState([]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -68,9 +67,6 @@ export const UploadMusic = () => {
       setSuccess('File uploaded successfully!');
       console.log('File URL:', fileURL);
 
-      // Fetch and update the list of uploaded songs
-      await fetchSongs();
-
       setFile(null);
 
     } catch (err) {
@@ -80,22 +76,6 @@ export const UploadMusic = () => {
       setUploading(false);
     }
   };
-
-  // Fetch songs from Firestore
-  const fetchSongs = async () => {
-    const db = getFirestore();
-    const songsCollection = collection(db, 'songs');
-    const querySnapshot = await getDocs(songsCollection);
-    const songs = querySnapshot.docs.map(doc => ({
-      id: doc.id,
-      ...doc.data()
-    }));
-    setUploadedSongs(songs);
-  };
-
-  useEffect(() => {
-    fetchSongs();
-  }, []);
 
   return (
     <div className="p-6 max-w-4xl mx-auto">
@@ -149,32 +129,6 @@ export const UploadMusic = () => {
           </button>
         </div>
       </form>
-
-      {uploadedSongs.length > 0 && (
-        <div className="mt-8">
-          <h2 className="text-xl font-semibold mb-4">Uploaded Songs</h2>
-          <div className="space-y-4">
-            {uploadedSongs.map((song, index) => (
-              <div key={index} className="bg-white p-4 rounded-lg shadow">
-                <div className="flex justify-between items-center mb-2">
-                  <h3 className="font-medium">{song.name}</h3>
-                  <span className="text-sm text-gray-500">{song.uploadedAt}</span>
-                </div>
-                <audio
-                  controls
-                  className="w-full mt-2"
-                  src={song.url}
-                >
-                  Your browser does not support the audio element.
-                </audio>
-                <p className="text-sm text-gray-500 mt-2">
-                  IPFS Hash: {song.ipfsHash}
-                </p>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
     </div>
   );
 };
