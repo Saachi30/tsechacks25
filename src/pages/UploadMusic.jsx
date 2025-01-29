@@ -4,8 +4,8 @@ import { getFirestore, collection, addDoc } from 'firebase/firestore';
 
 export const UploadMusic = () => {
   const [formData, setFormData] = useState({
-    title: '',
-    description: '',
+    songName: '',
+    artists: [''],  // Initialize with one empty artist field
     genre: '',
     collaborators: [],
     royaltySplits: []
@@ -15,6 +15,21 @@ export const UploadMusic = () => {
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+
+  const handleArtistChange = (index, value) => {
+    const newArtists = [...formData.artists];
+    newArtists[index] = value;
+    setFormData({ ...formData, artists: newArtists });
+  };
+
+  const addArtistField = () => {
+    setFormData({ ...formData, artists: [...formData.artists, ''] });
+  };
+
+  const removeArtistField = (index) => {
+    const newArtists = formData.artists.filter((_, i) => i !== index);
+    setFormData({ ...formData, artists: newArtists });
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -53,11 +68,11 @@ export const UploadMusic = () => {
         url: fileURL,
         ipfsHash: data.IpfsHash,
         uploadedAt: new Date().toLocaleString(),
-        title: formData.title,
-        description: formData.description,
+        songName: formData.songName,
+        artists: formData.artists.filter(artist => artist.trim() !== ''),
         genre: formData.genre,
-        collaborators: formData.collaborators,
-        royaltySplits: formData.royaltySplits
+        collaborators: [],
+        royaltySplits: []
       };
 
       const db = getFirestore();
@@ -68,6 +83,13 @@ export const UploadMusic = () => {
       console.log('File URL:', fileURL);
 
       setFile(null);
+      setFormData({
+        songName: '',
+        artists: [''],
+        genre: '',
+        collaborators: [],
+        royaltySplits: []
+      });
 
     } catch (err) {
       setError(err.message || 'Failed to upload file');
@@ -95,6 +117,69 @@ export const UploadMusic = () => {
               {success}
             </div>
           )}
+
+          {/* Song Name Input */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700">
+              Song Name
+            </label>
+            <input
+              type="text"
+              value={formData.songName}
+              onChange={(e) => setFormData({ ...formData, songName: e.target.value })}
+              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+              required
+            />
+          </div>
+
+          {/* Artists Input Fields */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700">
+              Artists
+            </label>
+            {formData.artists.map((artist, index) => (
+              <div key={index} className="flex gap-2 mt-2">
+                <input
+                  type="text"
+                  value={artist}
+                  onChange={(e) => handleArtistChange(index, e.target.value)}
+                  className="flex-1 rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                  placeholder="Artist name"
+                  required
+                />
+                {formData.artists.length > 1 && (
+                  <button
+                    type="button"
+                    onClick={() => removeArtistField(index)}
+                    className="px-3 py-2 text-red-600 hover:text-red-800"
+                  >
+                    Remove
+                  </button>
+                )}
+              </div>
+            ))}
+            <button
+              type="button"
+              onClick={addArtistField}
+              className="mt-2 text-sm text-blue-600 hover:text-blue-800"
+            >
+              + Add Another Artist
+            </button>
+          </div>
+
+          {/* Genre Input */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700">
+              Genre
+            </label>
+            <input
+              type="text"
+              value={formData.genre}
+              onChange={(e) => setFormData({ ...formData, genre: e.target.value })}
+              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+              required
+            />
+          </div>
 
           <div className="flex items-center justify-center w-full">
             <label className="flex flex-col items-center justify-center w-full h-64 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100">
@@ -132,3 +217,5 @@ export const UploadMusic = () => {
     </div>
   );
 };
+
+export default UploadMusic;

@@ -1,3 +1,4 @@
+//doc2
 import React, { useEffect, useState } from 'react';
 import { collection, query, getDocs, addDoc, doc, updateDoc, arrayUnion } from 'firebase/firestore';
 import { db } from '../components/firebase';
