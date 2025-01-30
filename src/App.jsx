@@ -31,6 +31,25 @@ import Login from './components/login';
 import Register from './components/register';
 import MusicRightsChatbot from './pages/AiAgent';
 import AnalyticsDashboard from './pages/AnalyticsDashboard';
+
+import preloaderAnimation from './assets/Animation.gif';
+
+const Preloader = () => {
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#0D1117]">
+      <img 
+        src={preloaderAnimation} 
+        alt="Loading..." 
+        className="w-1/4 h-auto max-w-full max-h-full"
+      />
+    </div>
+  );
+};
+const LoadingSpinner = () => (
+  <div className="flex items-center justify-center h-screen">
+    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
+  </div>
+);
 // Protected Route Component
 const ProtectedRoute = ({ children }) => {
   const [loading, setLoading] = useState(true);
