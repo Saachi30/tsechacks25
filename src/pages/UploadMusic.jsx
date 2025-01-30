@@ -286,9 +286,29 @@ export const UploadMusic = () => {
   };
 
   return (
-    <div className="p-6 max-w-4xl mx-auto">
-      <h1 className="text-2xl font-bold mb-2">Upload Music</h1>
-      <p className="text-gray-600 mb-6">Upload and tokenize your music rights</p>
+    <div className="min-h-screen bg-blue-50 relative overflow-hidden">
+    {/* Decorative SVG Elements */}
+    <div className="absolute top-0 left-0 w-64 h-64 opacity-10">
+      <svg viewBox="0 0 100 100">
+        <circle cx="50" cy="50" r="40" className="fill-blue-500" />
+        <path d="M50 10 A40 40 0 0 1 90 50" fill="none" stroke="currentColor" className="stroke-blue-600" strokeWidth="2" />
+      </svg>
+    </div>
+    
+    <div className="absolute bottom-0 right-0 w-96 h-96 opacity-10 transform rotate-180">
+      <svg viewBox="0 0 100 100">
+        <circle cx="50" cy="50" r="45" className="fill-blue-400" />
+        <path d="M20 50 Q50 20 80 50" fill="none" stroke="currentColor" className="stroke-blue-500" strokeWidth="3" />
+      </svg>
+    </div>
+
+    {/* Main Content Container */}
+    <div className="max-w-4xl mx-auto pt-12 pb-20 px-4">
+        {/* Header Section */}
+        <div className="text-center mb-12">
+          <h1 className="text-4xl font-bold text-gray-800 mb-4">Upload Your Music</h1>
+          <p className="text-gray-600 text-lg">Tokenize and protect your musical creations</p>
+        </div>
 
       {showPlagiarismAlert && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
@@ -347,7 +367,7 @@ export const UploadMusic = () => {
 </div>
         </div>
       )}
-
+ <div className="bg-white rounded-2xl shadow-xl p-8 pt-6 relative">
       <form onSubmit={handleSubmit} className="space-y-6">
         <div className="space-y-4">
           {error && (
@@ -470,7 +490,7 @@ export const UploadMusic = () => {
           </button>
         </div>
       </form>
-
+      </div>
       {showPlagiarismAlert && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
         <div className="bg-white rounded-lg p-6 max-w-md w-full border-2 border-red-500">
@@ -528,6 +548,7 @@ export const UploadMusic = () => {
 </div>
 </div>
       )}
+    </div>
     </div>
   );
 };
