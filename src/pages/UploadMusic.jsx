@@ -1,10 +1,9 @@
 import React, { useState } from 'react';
 import { Upload } from 'lucide-react';
 import { auth, db } from '../components/firebase';
-import { collection, query, where, getDocs, addDoc,updateDoc, doc } from 'firebase/firestore';
+import { collection, query, where, getDocs, addDoc, updateDoc, doc } from 'firebase/firestore';
 import { ethers } from 'ethers';
 
-// ABI can be imported from a separate file in practice
 const CONTRACT_ADDRESS = "0x8Ab34d6DE6Bc0144b18183d5ff6B530DE1a95638";
 const CONTRACT_ABI = [
   {
@@ -43,11 +42,14 @@ export const UploadMusic = () => {
 
   const [file, setFile] = useState(null);
   const [uploading, setUploading] = useState(false);
+  const [checking, setChecking] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [artistEmail, setArtistEmail] = useState('');
   const [artistRole, setArtistRole] = useState('');
   const [roleOptions] = useState(['composer', 'musician', 'writer']);
+  const [showPlagiarismAlert, setShowPlagiarismAlert] = useState(false);
+  const [plagiarismDetails, setPlagiarismDetails] = useState(null);
 
   const handleArtistChange = (email, role) => {
     setFormData({ ...formData, artists: { ...formData.artists, [email]: role } });
@@ -76,6 +78,70 @@ export const UploadMusic = () => {
     } catch (err) {
       setError('Failed to add artist');
       console.error('Error adding artist:', err);
+    }
+  };
+
+  const checkPlagiarism = async (newFile) => {
+    setChecking(true);
+    setError('');
+    
+    try {
+      const songsCollection = collection(db, 'songs');
+      const songsSnapshot = await getDocs(songsCollection);
+      
+      for (const songDoc of songsSnapshot.docs) {
+        const song = songDoc.data();
+        
+        const formData = new FormData();
+        formData.append('file1', newFile);
+        
+        // Fetch the existing song file from IPFS
+        const existingFileResponse = await fetch(song.url);
+        const existingFileBlob = await existingFileResponse.blob();
+        formData.append('file2', existingFileBlob);
+        
+        const response = await fetch('http://localhost:5000/detect_plagiarism', {
+          method: 'POST',
+          body: formData
+        });
+        
+        if (!response.ok) {
+          throw new Error('Plagiarism check failed');
+        }
+        
+        const result = await response.json();
+        
+        if (result.is_plagiarized) {
+          // Get owner details
+          const artistIds = Object.keys(song.artists);
+          const artistDetails = await Promise.all(
+            artistIds.map(async (id) => {
+              const userDoc = await getDocs(query(collection(db, 'Users'), where('__name__', '==', id)));
+              if (!userDoc.empty) {
+                return userDoc.docs[0].data();
+              }
+              return null;
+            })
+          );
+          
+          setPlagiarismDetails({
+            similarity: result.similarity_percentage,
+            originalSong: song.songName,
+            owners: artistDetails.filter(Boolean),
+            originalUrl: song.url
+          });
+          setShowPlagiarismAlert(true);
+          setChecking(false);
+          return false;
+        }
+      }
+      
+      setChecking(false);
+      return true;
+    } catch (err) {
+      setError('Failed to check plagiarism: ' + err.message);
+      setChecking(false);
+      return false;
     }
   };
 
@@ -127,11 +193,19 @@ export const UploadMusic = () => {
       return;
     }
 
-    setUploading(true);
     setError('');
     setSuccess('');
 
     try {
+      // First check for plagiarism
+      const isPlagiarismFree = await checkPlagiarism(file);
+      
+      if (!isPlagiarismFree) {
+        return;
+      }
+
+      // If no plagiarism detected, proceed with upload
+      setUploading(true);
       const fileData = new FormData();
       fileData.append("file", file);
 
@@ -215,6 +289,64 @@ export const UploadMusic = () => {
     <div className="p-6 max-w-4xl mx-auto">
       <h1 className="text-2xl font-bold mb-2">Upload Music</h1>
       <p className="text-gray-600 mb-6">Upload and tokenize your music rights</p>
+
+      {showPlagiarismAlert && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+        <div className="bg-white rounded-lg p-6 max-w-md w-full border-2 border-red-500">
+  <div className="flex items-center gap-2 mb-4">
+    <h3 className="text-xl font-bold">Plagiarism Detected</h3>
+    <svg 
+      className="w-6 h-6 text-red-500" 
+      fill="none" 
+      stroke="currentColor" 
+      viewBox="0 0 24 24" 
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      <path 
+        strokeLinecap="round" 
+        strokeLinejoin="round" 
+        strokeWidth="2" 
+        d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+      />
+    </svg>
+  </div>
+  <div className="space-y-4">
+    <p>Your song appears to be similar to an existing song:</p>
+    <div className="p-4 bg-gray-100 rounded-lg">
+      <p><strong>Similarity:</strong> {plagiarismDetails?.similarity.toFixed(2)}%</p>
+      <p><strong>Original Song:</strong> {plagiarismDetails?.originalSong}</p>
+      <p><strong>Original Owners:</strong></p>
+      <ul className="list-disc pl-5">
+        {plagiarismDetails?.owners.map((owner, index) => (
+          <li key={index}>{owner.email} - {owner.name}</li>
+        ))}
+      </ul>
+    </div>
+    <p>You can either upload a different song or request permission from the original owners.</p>
+    <div className="flex gap-4 justify-end mt-6">
+      <button
+        onClick={() => {
+          setFile(null);
+          setShowPlagiarismAlert(false);
+        }}
+        className="px-4 py-2 text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200"
+      >
+        Upload Another Song
+      </button>
+      <button
+        onClick={() => {
+          // Implement permission request logic here
+          setShowPlagiarismAlert(false);
+        }}
+        className="px-4 py-2 text-white bg-blue-600 rounded-lg hover:bg-blue-700"
+      >
+        Request Permission
+      </button>
+    </div>
+  </div>
+</div>
+        </div>
+      )}
 
       <form onSubmit={handleSubmit} className="space-y-6">
         <div className="space-y-4">
@@ -331,13 +463,71 @@ export const UploadMusic = () => {
 
           <button
             type="submit"
-            disabled={uploading}
+            disabled={uploading || checking}
             className="w-full px-4 py-2 text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed"
           >
-            {uploading ? 'Uploading...' : 'Upload to IPFS & Register'}
+            {checking ? 'Checking Plagiarism...' : uploading ? 'Uploading...' : 'Upload to IPFS & Register'}
           </button>
         </div>
       </form>
+
+      {showPlagiarismAlert && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+        <div className="bg-white rounded-lg p-6 max-w-md w-full border-2 border-red-500">
+  <div className="flex items-center gap-2 mb-4">
+    <h3 className="text-xl font-bold">Plagiarism Detected</h3>
+    <svg 
+      className="w-6 h-6 text-red-500" 
+      fill="none" 
+      stroke="currentColor" 
+      viewBox="0 0 24 24" 
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      <path 
+        strokeLinecap="round" 
+        strokeLinejoin="round" 
+        strokeWidth="2" 
+        d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+      />
+    </svg>
+  </div>
+  <div className="space-y-4">
+    <p>Your song appears to be similar to an existing song:</p>
+    <div className="p-4 bg-gray-100 rounded-lg">
+      <p><strong>Similarity:</strong> {plagiarismDetails?.similarity.toFixed(2)}%</p>
+      <p><strong>Original Song:</strong> {plagiarismDetails?.originalSong}</p>
+      <p><strong>Original Owners:</strong></p>
+      <ul className="list-disc pl-5">
+        {plagiarismDetails?.owners.map((owner, index) => (
+          <li key={index}>{owner.email} - {owner.name}</li>
+        ))}
+      </ul>
+    </div>
+    <p>You can either upload a different song or request permission from the original owners.</p>
+    <div className="flex gap-4 justify-end mt-6">
+      <button
+        onClick={() => {
+          setFile(null);
+          setShowPlagiarismAlert(false);
+        }}
+        className="px-4 py-2 text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200"
+      >
+        Upload Another Song
+      </button>
+      <button
+        onClick={() => {
+          // Implement permission request logic here
+          setShowPlagiarismAlert(false);
+        }}
+        className="px-4 py-2 text-white bg-blue-600 rounded-lg hover:bg-blue-700"
+      >
+        Request Permission
+      </button>
+    </div>
+  </div>
+</div>
+</div>
+      )}
     </div>
   );
 };
