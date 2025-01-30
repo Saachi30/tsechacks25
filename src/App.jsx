@@ -81,7 +81,8 @@ const ProtectedRoute = ({ children }) => {
 
 // Navigation Items
 const navigationItems = [
-  { id: 'dashboard', path: '/dashboard', label: 'Dashboard', icon: <Home className="w-5 h-5" /> },
+  // { id: 'dashboard', path: '/dashboard', label: 'Dashboard', icon: <Home className="w-5 h-5" /> },
+  { id: 'analytics', path: '/analytics', label: 'Dashboard', icon: <BarChart2 className="w-5 h-5" /> },
   { id: 'my-music', path: '/mymusic', label: 'My Music', icon: <Music2 className="w-5 h-5" /> },
   { id: 'upload', path: '/upload', label: 'Upload Music', icon: <Upload className="w-5 h-5" /> },
   { id: 'rights', path: '/rights', label: 'Rights Management', icon: <Shield className="w-5 h-5" /> },
@@ -90,7 +91,6 @@ const navigationItems = [
   { id: 'crowdfunding', path: '/crowdfunding', label: 'Crowdfunding', icon: <Target className="w-5 h-5" /> },
   { id: 'streaming', path: '/streaming', label: 'Streaming', icon: <Radio className="w-5 h-5" /> },
   { id: 'issues', path: '/issues', label: 'Issues', icon: <AlertTriangle className="w-5 h-5" /> },
-  { id: 'analytics', path: '/analytics', label: 'Analytics', icon: <BarChart2 className="w-5 h-5" /> },
   { id: 'settings', path: '/settings', label: 'Settings', icon: <Settings className="w-5 h-5" /> }
 ];
 
@@ -196,7 +196,7 @@ const MainLayout = () => {
 
         <div className="flex-1 overflow-auto">
           <Routes>
-            <Route path="/dashboard" element={<Dashboard />} />
+            {/* <Route path="/dashboard" element={<Dashboard />} /> */}
             <Route path="/mymusic" element={<MyMusic />} />
             <Route path="/upload" element={<UploadMusic />} />
             <Route path="/rights" element={<RightsManagement />} />
@@ -206,7 +206,7 @@ const MainLayout = () => {
             <Route path="/streaming" element={<Streaming />} />
             <Route path="/issues" element={<Issues />} />
             <Route path="/analytics" element={<AnalyticsDashboard/>} /> {/* Add Analytics Dashboard route */}
-            <Route path="*" element={<Navigate to="/dashboard" replace />} />
+            <Route path="*" element={<Navigate to="/analytics" replace />} />
           </Routes>
           <MusicRightsChatbot />
         </div>
