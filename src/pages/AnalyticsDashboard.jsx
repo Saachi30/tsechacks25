@@ -234,7 +234,6 @@ export const AnalyticsDashboard = () => {
           <thead>
             <tr className="bg-gray-100">
               <th className="p-3 text-left">Song</th>
-              <th className="p-3 text-left">Artist</th>
               <th className="p-3 text-left">Upload Date</th>
               <th className="p-3 text-left">Plays</th>
               <th className="p-3 text-left">Likes</th>
@@ -247,7 +246,6 @@ export const AnalyticsDashboard = () => {
             {songs.map(song => (
               <tr key={song.id} className="border-b">
                 <td className="p-3">{song.songName}</td>
-                <td className="p-3">{song.artist}</td>
                 <td className="p-3">{new Date(song.uploadedAt).toLocaleDateString()}</td>
                 <td className="p-3">{song.plays || 0}</td>
                 <td className="p-3">{song.likes || 0}</td>
@@ -260,36 +258,7 @@ export const AnalyticsDashboard = () => {
         </table>
       </div>
 
-      {/* Artist Performance */}
-      <div className="bg-white p-6 rounded-lg shadow mb-8">
-        <h2 className="text-xl font-bold mb-4">Artist Performance</h2>
-        <div className="overflow-x-auto">
-          <table className="min-w-full">
-            <thead>
-              <tr className="bg-gray-100">
-                <th className="p-3 text-left">Artist</th>
-                <th className="p-3 text-left">Total Songs</th>
-                <th className="p-3 text-left">Total Plays</th>
-                <th className="p-3 text-left">Average Plays/Song</th>
-                <th className="p-3 text-left">Total Likes</th>
-                <th className="p-3 text-left">Total Shares</th>
-              </tr>
-            </thead>
-            <tbody>
-              {calculateArtistStats().map((artist, index) => (
-                <tr key={index} className="border-b">
-                  <td className="p-3">{artist.name}</td>
-                  <td className="p-3">{artist.songCount}</td>
-                  <td className="p-3">{artist.totalPlays}</td>
-                  <td className="p-3">{artist.averagePlayPerSong.toFixed(2)}</td>
-                  <td className="p-3">{artist.totalLikes}</td>
-                  <td className="p-3">{artist.totalShares}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
+     
     </div>
   );
 };
