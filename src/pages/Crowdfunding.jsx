@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { ethers } from 'ethers';
 import abi from '../abi.json';
-
 const CONTRACT_ABI = abi;
 const SMT_TOKEN_ADDRESS = "0xA06E0542a9bd269fd5886436993019fE35bf3d2F";
 const CONTRACT_ADDRESS = "0x8Ab34d6DE6Bc0144b18183d5ff6B530DE1a95638";
