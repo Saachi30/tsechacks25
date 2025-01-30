@@ -12,7 +12,8 @@ import {
   Bell,
   Wallet,
   Target,
-  Home
+  Home,
+  BarChart2 // Add this icon for Analytics Dashboard
 } from 'lucide-react';
 import { auth } from './components/firebase';
 import { onAuthStateChanged } from 'firebase/auth';
@@ -28,26 +29,38 @@ import GTranslate from './components/GTranslate';
 import LicenseManager from './pages/LicenseManager';
 import Login from './components/login';
 import Register from './components/register';
-import preloaderAnimation from './assets/Animation.gif';
+import MusicRightsChatbot from './pages/AiAgent';
+import AnalyticsDashboard from './pages/AnalyticsDashboard';
+// Protected Route Component
+const ProtectedRoute = ({ children }) => {
+  const [loading, setLoading] = useState(true);
+  const [user, setUser] = useState(null);
 
-const Preloader = () => {
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#0D1117]">
-      <img 
-        src={preloaderAnimation} 
-        alt="Loading..." 
-        className="w-1/4 h-auto max-w-full max-h-full"
-      />
-    </div>
-  );
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      setUser(user);
+      setLoading(false);
+    });
+
+    return () => unsubscribe();
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return <Navigate to="/" replace />;
+  }
+
+  return children;
 };
 
-const LoadingSpinner = () => (
-  <div className="flex items-center justify-center h-screen">
-    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
-  </div>
-);
-
+// Navigation Items
 const navigationItems = [
   { id: 'dashboard', path: '/dashboard', label: 'Dashboard', icon: <Home className="w-5 h-5" /> },
   { id: 'my-music', path: '/mymusic', label: 'My Music', icon: <Music2 className="w-5 h-5" /> },
@@ -58,9 +71,12 @@ const navigationItems = [
   { id: 'crowdfunding', path: '/crowdfunding', label: 'Crowdfunding', icon: <Target className="w-5 h-5" /> },
   { id: 'streaming', path: '/streaming', label: 'Streaming', icon: <Radio className="w-5 h-5" /> },
   { id: 'issues', path: '/issues', label: 'Issues', icon: <AlertTriangle className="w-5 h-5" /> },
+  
   { id: 'settings', path: '/settings', label: 'Settings', icon: <Settings className="w-5 h-5" /> }
 ];
 
+
+// Main Layout Component
 const MainLayout = () => {
   const location = useLocation();
   const [user, setUser] = useState(null);
@@ -68,9 +84,22 @@ const MainLayout = () => {
   const [account, setAccount] = useState(null);
 
   const connectWallet = async () => {
-    // Wallet connection logic here
-  };
+    // try {
+    //     const provider = new ethers.providers.Web3Provider(window.ethereum);
+    //     const accounts = await provider.send("eth_requestAccounts", []);
+    //     setAccount(accounts[0]);
 
+    //     const contractInstance = new ethers.Contract(
+    //         CONTRACT_ADDRESS,
+    //         abi,
+    //         provider.getSigner()
+    //     );
+    //     setContract(contractInstance);
+    //     toast.success("Wallet connected successfully!");
+    // } catch (error) {
+    //     toast.error("Failed to connect wallet");
+    // }
+};
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       setUser(user);
@@ -121,19 +150,20 @@ const MainLayout = () => {
               <Bell className="w-5 h-5 text-gray-600" />
             </button>
             <button
-              onClick={connectWallet}
-              className="relative p-2 hover:bg-gray-100 rounded-full"
-              onMouseEnter={() => setShowFullAddress(true)}
-              onMouseLeave={() => setShowFullAddress(false)}
-            >
-              <Wallet className="w-5 h-5 text-gray-600" />
-              {account && showFullAddress && (
-                <div className="absolute bg-slate-500/50 text-gray-800 px-3 py-1 rounded-lg shadow-lg top-10 left-1/4 transform -translate-x-1/2">
-                  {account}
-                </div>
-              )}
-            </button>
-            <GTranslate />
+                    onClick={connectWallet}
+                    className="relative p-2 hover:bg-gray-100 rounded-full"
+                    onMouseEnter={() => setShowFullAddress(true)}
+                    onMouseLeave={() => setShowFullAddress(false)}
+                >
+                    <Wallet className="w-5 h-5 text-gray-600" />
+                    
+                    {account && showFullAddress && (
+                        <div className="absolute bg-slate-500/50 text-gray-800 px-3 py-1 rounded-lg shadow-lg top-10 left-1/4 transform -translate-x-1/2">
+                            {account}
+                        </div>
+                    )}
+                </button>
+                <GTranslate/>
             <div className="relative">
               <button
                 onClick={handleLogout}
@@ -156,6 +186,7 @@ const MainLayout = () => {
             <Route path="/crowdfunding" element={<Crowdfunding />} />
             <Route path="/streaming" element={<Streaming />} />
             <Route path="/issues" element={<Issues />} />
+            <Route path="/analytics" element={<AnalyticsDashboard/>} /> {/* Add Analytics Dashboard route */}
             <Route path="*" element={<Navigate to="/dashboard" replace />} />
           </Routes>
         </div>
@@ -164,28 +195,28 @@ const MainLayout = () => {
   );
 };
 
-const ProtectedRoute = ({ children }) => {
-  const [loading, setLoading] = useState(true);
-  const [user, setUser] = useState(null);
+// const ProtectedRoute = ({ children }) => {
+//   const [loading, setLoading] = useState(true);
+//   const [user, setUser] = useState(null);
 
-  useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      setUser(user);
-      setLoading(false);
-    });
-    return () => unsubscribe();
-  }, []);
+//   useEffect(() => {
+//     const unsubscribe = onAuthStateChanged(auth, (user) => {
+//       setUser(user);
+//       setLoading(false);
+//     });
+//     return () => unsubscribe();
+//   }, []);
 
-  if (loading) {
-    return <LoadingSpinner />;
-  }
+//   if (loading) {
+//     return <LoadingSpinner />;
+//   }
 
-  if (!user) {
-    return <Navigate to="/" replace />;
-  }
+//   if (!user) {
+//     return <Navigate to="/" replace />;
+//   }
 
-  return children;
-};
+//   return children;
+// };
 
 const PublicRoute = ({ children }) => {
   const [user, setUser] = useState(null);
