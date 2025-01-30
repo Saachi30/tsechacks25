@@ -4,13 +4,24 @@ import music from '../assets/music.png'
 import { useNavigate } from "react-router-dom";
 import abi from '../abi.json'
 const contractABI = abi;
-const contractAddress =  "0x8Ab34d6DE6Bc0144b18183d5ff6B530DE1a95638";
+const contractAddress = "0x8Ab34d6DE6Bc0144b18183d5ff6B530DE1a95638";
 
 export const MyMusic = () => {
   const navigate = useNavigate();
   const [tracks, setTracks] = useState([]);
   const [selectedTrack, setSelectedTrack] = useState(null);
   const [showDetails, setShowDetails] = useState(false);
+  const [currentAddress, setCurrentAddress] = useState('');
+
+  const getCurrentWalletAddress = async () => {
+    try {
+      const provider = new ethers.providers.Web3Provider(window.ethereum);
+      const accounts = await provider.send("eth_requestAccounts", []);
+      setCurrentAddress(accounts[0].toLowerCase());
+    } catch (error) {
+      console.error("Error getting wallet address:", error);
+    }
+  };
 
   const getMusicDetails = async (musicId) => {
     try {
@@ -23,7 +34,7 @@ export const MyMusic = () => {
         id: details.id.toNumber(),
         title: details.title,
         genre: details.genre,
-        artist: details.artist,
+        artist: details.artist.toLowerCase(), // Convert to lowercase for comparison
         ipfsHash: details.ipfsHash,
         collaborators: collaborators,
         royaltySplits: splits.map(split => split.toNumber() / 100),
@@ -42,20 +53,30 @@ export const MyMusic = () => {
       const contract = new ethers.Contract(contractAddress, contractABI, provider);
       
       // We'll fetch the first 10 tracks for demonstration
-      // In a production app, you'd want to implement proper pagination
       const musicDetails = await Promise.all(
         Array(10).fill().map((_, i) => getMusicDetails(i + 1))
       );
       
-      setTracks(musicDetails.filter(track => track !== null));
+      // Filter tracks where the artist matches the current wallet address
+      const filteredTracks = musicDetails.filter(
+        track => track !== null && track.artist === currentAddress
+      );
+      
+      setTracks(filteredTracks);
     } catch (error) {
       console.error("Error fetching tracks:", error);
     }
   };
 
   useEffect(() => {
-    fetchAllMusic();
+    getCurrentWalletAddress();
   }, []);
+
+  useEffect(() => {
+    if (currentAddress) {
+      fetchAllMusic();
+    }
+  }, [currentAddress]);
 
   const handleViewDetails = async (track) => {
     setSelectedTrack(track);
@@ -70,62 +91,68 @@ export const MyMusic = () => {
     <div className="p-6 space-y-6 bg-blue-50 min-h-screen">
       <div className="flex justify-between items-center">
         <div>
-        <h1 className="text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-800 to-purple-800">
-              My Music
-            </h1>
+          <h1 className="text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-800 to-purple-800">
+            My Music
+          </h1>
           <p className="text-gray-600">Manage your music rights and collaborations</p>
         </div>
-        <button className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors"onClick={() => navigate("/upload")}>
+        <button className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors" onClick={() => navigate("/upload")}>
           Register New Track
         </button>
       </div>
 
-      <div className="grid grid-cols-1 gap-4">
-        {tracks.map((track) => (
-          <div key={track.id} className="bg-white rounded-xl shadow-sm p-6 transition-all hover:shadow-md hover:scale-102 transition-transform duration-200">
-            <div className="flex items-center space-x-6">
-              <img
-                src={music}
-                alt={track.title}
-                className="w-24 h-24 rounded-lg object-cover"
-              />
-           <div className="flex-1 min-w-0">
-                    <h3 className="text-lg font-bold text-gray-800 mb-2">{track.title}</h3>
-                    <div className="grid grid-cols-4 gap-3">
-                      <div className="bg-gray-100 rounded-lg p-2 transform hover:scale-105 transition-transform duration-200">
-                        <p className="text-xs text-gray-500">Genre</p>
-                        <p className="font-semibold text-gray-900 text-sm truncate">{track.genre}</p>
-                      </div>
-                      <div className="bg-gray-100 rounded-lg p-2 transform hover:scale-105 transition-transform duration-200">
-                        <p className="text-xs text-gray-500">Artist</p>
-                        <p className="font-mono font-semibold text-gray-900 text-sm truncate">{formatAddress(track.artist)}</p>
-                      </div>
-                      <div className="bg-gray-100 rounded-lg p-2 transform hover:scale-105 transition-transform duration-200">
-                        <p className="text-xs text-gray-500">Collaborators</p>
-                        <p className="font-semibold text-gray-900 text-sm">{track.collaboratorCount}</p>
-                      </div>
-                      <div className="bg-gray-100 rounded-lg p-2 transform hover:scale-105 transition-transform duration-200">
-                        <p className="text-xs text-gray-500">Revenue</p>
-                        <p className="font-semibold text-gray-900 text-sm">{track.revenue} ETH</p>
-                      </div>
+      {tracks.length === 0 ? (
+        <div className="text-center py-10">
+          <p className="text-gray-600">No tracks found for your wallet address</p>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 gap-4">
+          {tracks.map((track) => (
+            <div key={track.id} className="bg-white rounded-xl shadow-sm p-6 transition-all hover:shadow-md hover:scale-102 transition-transform duration-200">
+              <div className="flex items-center space-x-6">
+                <img
+                  src={music}
+                  alt={track.title}
+                  className="w-24 h-24 rounded-lg object-cover"
+                />
+                <div className="flex-1 min-w-0">
+                  <h3 className="text-lg font-bold text-gray-800 mb-2">{track.title}</h3>
+                  <div className="grid grid-cols-4 gap-3">
+                    <div className="bg-gray-100 rounded-lg p-2 transform hover:scale-105 transition-transform duration-200">
+                      <p className="text-xs text-gray-500">Genre</p>
+                      <p className="font-semibold text-gray-900 text-sm truncate">{track.genre}</p>
+                    </div>
+                    <div className="bg-gray-100 rounded-lg p-2 transform hover:scale-105 transition-transform duration-200">
+                      <p className="text-xs text-gray-500">Artist</p>
+                      <p className="font-mono font-semibold text-gray-900 text-sm truncate">{formatAddress(track.artist)}</p>
+                    </div>
+                    <div className="bg-gray-100 rounded-lg p-2 transform hover:scale-105 transition-transform duration-200">
+                      <p className="text-xs text-gray-500">Collaborators</p>
+                      <p className="font-semibold text-gray-900 text-sm">{track.collaboratorCount}</p>
+                    </div>
+                    <div className="bg-gray-100 rounded-lg p-2 transform hover:scale-105 transition-transform duration-200">
+                      <p className="text-xs text-gray-500">Revenue</p>
+                      <p className="font-semibold text-gray-900 text-sm">{track.revenue} ETH</p>
                     </div>
                   </div>
+                </div>
 
-              <div className="flex space-x-3">
-                <button 
-                  className="px-4 py-2 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors text-gray-700"
-                  onClick={() => handleViewDetails(track)}
-                >
-                  View Details
-                </button>
-                <button className="px-4 py-2 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors text-gray-700 "onClick={() => navigate("/rights")}>
-                  Manage Rights
-                </button>
+                <div className="flex space-x-3">
+                  <button 
+                    className="px-4 py-2 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors text-gray-700"
+                    onClick={() => handleViewDetails(track)}
+                  >
+                    View Details
+                  </button>
+                  <button className="px-4 py-2 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors text-gray-700" onClick={() => navigate("/rights")}>
+                    Manage Rights
+                  </button>
+                </div>
               </div>
             </div>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
 
       {showDetails && selectedTrack && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4">
@@ -170,7 +197,6 @@ export const MyMusic = () => {
           </div>
         </div>
       )}
-      
     </div>
   );
 };

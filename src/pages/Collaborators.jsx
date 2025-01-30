@@ -11,11 +11,13 @@ export const Collaborators = () => {
   const [collaborations, setCollaborations] = useState([]);
   const [showModal, setShowModal] = useState(false);
   const [musics, setMusics] = useState([]);
+  const [myMusics, setMyMusics] = useState([]); // New state for filtered music
   const [selectedMusic, setSelectedMusic] = useState(null);
   const [selectedMusicDetails, setSelectedMusicDetails] = useState(null);
   const [loading, setLoading] = useState(false);
   const [smtBalance, setSmtBalance] = useState('0');
   const [distributionAmount, setDistributionAmount] = useState('');
+  const [currentAccount, setCurrentAccount] = useState(''); // New state for wallet address
   const [formData, setFormData] = useState({
     collaborators: [''],
     royaltySplits: ['']
@@ -28,6 +30,16 @@ export const Collaborators = () => {
       return new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, signer);
     }
     return null;
+  };
+
+  // Get current wallet address
+  const getCurrentWalletAddress = async () => {
+    try {
+      const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+      setCurrentAccount(accounts[0].toLowerCase());
+    } catch (error) {
+      console.error("Error getting wallet address:", error);
+    }
   };
 
   const fetchSmtBalance = async () => {
@@ -54,23 +66,17 @@ export const Collaborators = () => {
       if (!contract) return;
 
       setLoading(true);
-
-      // Convert the distribution amount to wei
       const amountInWei = ethers.utils.parseEther(distributionAmount.toString());
       
-      // First approve the contract to spend tokens
       const smt = new ethers.Contract(
         await contract.stableMusicToken(),
-        [
-          "function approve(address spender, uint256 amount) public returns (bool)"
-        ],
+        ["function approve(address spender, uint256 amount) public returns (bool)"],
         (await getContract()).signer
       );
 
       const approveTx = await smt.approve(CONTRACT_ADDRESS, amountInWei);
       await approveTx.wait();
 
-      // Now distribute the royalties
       const tx = await contract.distributeRoyalties(musicId, amountInWei);
       await tx.wait();
       
@@ -103,7 +109,7 @@ export const Collaborators = () => {
             musicDetails.push({
               id: music.id.toString(),
               title: music.title,
-              artist: music.artist,
+              artist: music.artist.toLowerCase(), // Convert to lowercase for comparison
               genre: music.genre,
               collaborators: music.collaborators,
               royaltySplits: music.royaltySplits.map(split => split.toString()),
@@ -117,6 +123,9 @@ export const Collaborators = () => {
       }
       
       setMusics(musicDetails);
+      // Filter music where artist matches current wallet
+      const filtered = musicDetails.filter(music => music.artist === currentAccount);
+      setMyMusics(filtered);
       await fetchCollaborations(musicDetails);
     } catch (error) {
       console.error("Error fetching music details:", error);
@@ -124,6 +133,29 @@ export const Collaborators = () => {
       setLoading(false);
     }
   };
+
+  // Initialize component
+  useEffect(() => {
+    const init = async () => {
+      await getCurrentWalletAddress();
+      await fetchMusicDetails();
+    };
+    init();
+
+    // Listen for account changes
+    if (window.ethereum) {
+      window.ethereum.on('accountsChanged', async (accounts) => {
+        setCurrentAccount(accounts[0].toLowerCase());
+        await fetchMusicDetails();
+      });
+    }
+
+    return () => {
+      if (window.ethereum) {
+        window.ethereum.removeListener('accountsChanged', getCurrentWalletAddress);
+      }
+    };
+  }, []);
 
  
 
@@ -359,49 +391,55 @@ export const Collaborators = () => {
     <h2 className="font-semibold">Distribute Royalties</h2>
   </div>
   <div className="p-6">
-    <div className="grid gap-6">
-      {musics.map((music) => (
-        <div key={music.id} className="border rounded-lg p-4 bg-gray-50">
-          <div className="grid grid-cols-2 gap-4 mb-4">
-            <div>
-              <h3 className="font-medium text-lg">{music.title}</h3>
-              <p className="text-gray-600">Genre: {music.genre}</p>
-              <p className="text-gray-600">Artist: {music.artist}</p>
+    {myMusics.length === 0 ? (
+      <div className="text-center text-gray-500 py-4">
+        No songs found where you are the artist.
+      </div>
+    ) : (
+      <div className="grid gap-6">
+        {myMusics.map((music) => (
+          <div key={music.id} className="border rounded-lg p-4 bg-gray-50">
+            <div className="grid grid-cols-2 gap-4 mb-4">
+              <div>
+                <h3 className="font-medium text-lg">{music.title}</h3>
+                <p className="text-gray-600">Genre: {music.genre}</p>
+                <p className="text-gray-600">Artist: {music.artist}</p>
+              </div>
+              <div>
+                <p className="text-gray-600">Current Revenue: {music.revenue} ETH</p>
+                <p className="text-gray-600">
+                  Collaborators: {music.collaborators.length}
+                </p>
+              </div>
             </div>
-            <div>
-              <p className="text-gray-600">Current Revenue: {music.revenue} ETH</p>
-              <p className="text-gray-600">
-                Collaborators: {music.collaborators.length}
-              </p>
+            <div className="flex gap-4 items-end">
+              <ReclaimVerification />
+              <div className="flex-1">
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Distribution Amount (SMT)
+                </label>
+                <input
+                  type="number"
+                  step="0.000000000000000001"
+                  min="0"
+                  value={distributionAmount}
+                  onChange={(e) => setDistributionAmount(e.target.value)}
+                  className="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  placeholder="Enter amount"
+                />
+              </div>
+              <button
+                onClick={() => handleDistributeRoyalties(music.id)}
+                disabled={loading || !distributionAmount || distributionAmount <= 0}
+                className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
+              >
+                {loading ? 'Distributing...' : 'Distribute'}
+              </button>
             </div>
           </div>
-          <div className="flex gap-4 items-end">
-            <ReclaimVerification />
-            <div className="flex-1">
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Distribution Amount (SMT)
-              </label>
-              <input
-                type="number"
-                step="0.000000000000000001"
-                min="0"
-                value={distributionAmount}
-                onChange={(e) => setDistributionAmount(e.target.value)}
-                className="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                placeholder="Enter amount"
-              />
-            </div>
-            <button
-              onClick={() => handleDistributeRoyalties(music.id)}
-              disabled={loading || !distributionAmount || distributionAmount <= 0}
-              className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
-            >
-              {loading ? 'Distributing...' : 'Distribute'}
-            </button>
-          </div>
-        </div>
-      ))}
-    </div>
+        ))}
+      </div>
+    )}
   </div>
 </div>
 )}

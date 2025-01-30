@@ -3,13 +3,17 @@ import React, { useEffect, useState } from 'react';
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend } from 'recharts';
 import { collection, query, getDocs } from 'firebase/firestore';
 import { db } from '../components/firebase';
+import emailjs from '@emailjs/browser';
+import { getAuth } from 'firebase/auth';
 
 export const AnalyticsDashboard = () => {
   const [songs, setSongs] = useState([]);
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [selectedTimeRange, setSelectedTimeRange] = useState('all'); // 'week', 'month', 'year', 'all'
+  const [selectedTimeRange, setSelectedTimeRange] = useState('all');
+  const [emailSending, setEmailSending] = useState(false);
+  const auth = getAuth();
 
   useEffect(() => {
     const fetchData = async () => {
@@ -72,14 +76,89 @@ export const AnalyticsDashboard = () => {
       averagePlayPerSong: stats.totalPlays / stats.songCount
     }));
   };
+  const generateEmailReport = () => {
+    const totalSongs = songs.length;
+    const totalArtists = new Set(songs.map(song => song.artist)).size;
+    const totalPlays = songs.reduce((sum, song) => sum + (song.plays || 0), 0);
+    const totalUsers = users.length;
+    
+    const artistStats = calculateArtistStats();
+    const topArtists = [...artistStats]
+      .sort((a, b) => b.totalPlays - a.totalPlays)
+      .slice(0, 5);
+
+    const topSongs = [...songs]
+      .sort((a, b) => (b.plays || 0) - (a.plays || 0))
+      .slice(0, 5);
+
+    return {
+      totalSongs,
+      totalArtists,
+      totalPlays,
+      totalUsers,
+      topArtists,
+      topSongs,
+      timeRange: selectedTimeRange,
+      reportDate: new Date().toLocaleDateString()
+    };
+  };
+
+  const sendAnalyticsReport = async () => {
+    if (!auth.currentUser?.email) {
+      setError('No user email found');
+      return;
+    }
+
+    setEmailSending(true);
+    const reportData = generateEmailReport();
+
+    try {
+      await emailjs.send(
+        'service_i3t8r4m',
+        'template_e254j4c',
+        {
+          to_email: auth.currentUser.email,
+          report_date: reportData.reportDate,
+          time_range: reportData.timeRange,
+          total_songs: reportData.totalSongs,
+          total_artists: reportData.totalArtists,
+          total_plays: reportData.totalPlays,
+          total_users: reportData.totalUsers,
+          top_artists: reportData.topArtists
+            .map(artist => `${artist.name} (${artist.totalPlays} plays)`)
+            .join('\n'),
+          top_songs: reportData.topSongs
+            .map(song => `${song.songName} by ${song.artist} (${song.plays || 0} plays)`)
+            .join('\n')
+        },
+        'hfx--3KcbLgX-EWIv'
+      );
+
+      alert('Analytics report sent successfully!');
+    } catch (err) {
+      setError('Failed to send email report: ' + err.message);
+    } finally {
+      setEmailSending(false);
+    }
+  };
 
   if (loading) return <div className="p-6">Loading analytics data...</div>;
   if (error) return <div className="p-6 text-red-500">Error: {error}</div>;
 
+
   return (
     <div className="p-6 bg-gray-50 min-h-screen">
-      <h1 className="text-3xl font-bold mb-8">Music Analytics Dashboard</h1>
-      
+  
+    <div className="flex justify-between items-center mb-6">
+      <h1 className="text-3xl font-bold">Music Analytics Dashboard</h1>
+      <button
+        onClick={sendAnalyticsReport}
+        disabled={emailSending}
+        className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-md disabled:bg-blue-300"
+      >
+        {emailSending ? 'Sending Report...' : 'Send Email Report'}
+      </button>
+    </div>
       {/* Time Range Selector */}
       <div className="mb-6">
         <select 

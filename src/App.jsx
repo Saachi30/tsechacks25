@@ -208,6 +208,7 @@ const MainLayout = () => {
             <Route path="/analytics" element={<AnalyticsDashboard/>} /> {/* Add Analytics Dashboard route */}
             <Route path="*" element={<Navigate to="/dashboard" replace />} />
           </Routes>
+          <MusicRightsChatbot />
         </div>
       </div>
     </div>
