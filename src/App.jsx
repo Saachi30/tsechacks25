@@ -1,4 +1,3 @@
-// App.js
 import React, { useEffect, useState } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { 
@@ -43,36 +42,12 @@ const Preloader = () => {
   );
 };
 
-// Protected Route Component
-const ProtectedRoute = ({ children }) => {
-  const [loading, setLoading] = useState(true);
-  const [user, setUser] = useState(null);
+const LoadingSpinner = () => (
+  <div className="flex items-center justify-center h-screen">
+    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
+  </div>
+);
 
-  useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      setUser(user);
-      setLoading(false);
-    });
-
-    return () => unsubscribe();
-  }, []);
-
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
-      </div>
-    );
-  }
-
-  if (!user) {
-    return <Navigate to="/" replace />;
-  }
-
-  return children;
-};
-
-// Navigation Items
 const navigationItems = [
   { id: 'dashboard', path: '/dashboard', label: 'Dashboard', icon: <Home className="w-5 h-5" /> },
   { id: 'my-music', path: '/mymusic', label: 'My Music', icon: <Music2 className="w-5 h-5" /> },
@@ -83,41 +58,23 @@ const navigationItems = [
   { id: 'crowdfunding', path: '/crowdfunding', label: 'Crowdfunding', icon: <Target className="w-5 h-5" /> },
   { id: 'streaming', path: '/streaming', label: 'Streaming', icon: <Radio className="w-5 h-5" /> },
   { id: 'issues', path: '/issues', label: 'Issues', icon: <AlertTriangle className="w-5 h-5" /> },
-  
   { id: 'settings', path: '/settings', label: 'Settings', icon: <Settings className="w-5 h-5" /> }
 ];
 
-
-// Main Layout Component
 const MainLayout = () => {
   const location = useLocation();
   const [user, setUser] = useState(null);
   const [showFullAddress, setShowFullAddress] = useState(false);
   const [account, setAccount] = useState(null);
-  const [contract, setContract] = useState(null);
 
   const connectWallet = async () => {
-    // try {
-    //     const provider = new ethers.providers.Web3Provider(window.ethereum);
-    //     const accounts = await provider.send("eth_requestAccounts", []);
-    //     setAccount(accounts[0]);
+    // Wallet connection logic here
+  };
 
-    //     const contractInstance = new ethers.Contract(
-    //         CONTRACT_ADDRESS,
-    //         abi,
-    //         provider.getSigner()
-    //     );
-    //     setContract(contractInstance);
-    //     toast.success("Wallet connected successfully!");
-    // } catch (error) {
-    //     toast.error("Failed to connect wallet");
-    // }
-};
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       setUser(user);
     });
-
     return () => unsubscribe();
   }, []);
 
@@ -131,7 +88,6 @@ const MainLayout = () => {
 
   return (
     <div className="flex h-screen overflow-hidden bg-gray-100">
-      {/* Sidebar */}
       <div className="w-64 bg-[#0D1117] text-gray-300 flex flex-col flex-shrink-0">
         <div className="p-4 flex items-center space-x-3">
           <div className="text-blue-500">
@@ -156,34 +112,28 @@ const MainLayout = () => {
         </nav>
       </div>
 
-      {/* Main Content Area */}
       <div className="flex-1 flex flex-col overflow-hidden">
-        {/* Top Bar */}
         <div className="bg-white h-16 border-b flex items-center justify-between px-6 flex-shrink-0">
-          <div className="flex items-center w-96">
-           
-          </div>
+          <div className="flex items-center w-96"></div>
           
           <div className="flex items-center space-x-4">
             <button className="p-2 hover:bg-gray-100 rounded-full">
               <Bell className="w-5 h-5 text-gray-600" />
             </button>
-            {/* Wallet Button */}
             <button
-                    onClick={connectWallet}
-                    className="relative p-2 hover:bg-gray-100 rounded-full"
-                    onMouseEnter={() => setShowFullAddress(true)}
-                    onMouseLeave={() => setShowFullAddress(false)}
-                >
-                    <Wallet className="w-5 h-5 text-gray-600" />
-                    
-                    {account && showFullAddress && (
-                        <div className="absolute bg-slate-500/50 text-gray-800 px-3 py-1 rounded-lg shadow-lg top-10 left-1/4 transform -translate-x-1/2">
-                            {account}
-                        </div>
-                    )}
-                </button>
-                <GTranslate/>
+              onClick={connectWallet}
+              className="relative p-2 hover:bg-gray-100 rounded-full"
+              onMouseEnter={() => setShowFullAddress(true)}
+              onMouseLeave={() => setShowFullAddress(false)}
+            >
+              <Wallet className="w-5 h-5 text-gray-600" />
+              {account && showFullAddress && (
+                <div className="absolute bg-slate-500/50 text-gray-800 px-3 py-1 rounded-lg shadow-lg top-10 left-1/4 transform -translate-x-1/2">
+                  {account}
+                </div>
+              )}
+            </button>
+            <GTranslate />
             <div className="relative">
               <button
                 onClick={handleLogout}
@@ -195,7 +145,6 @@ const MainLayout = () => {
           </div>
         </div>
 
-        {/* Page Content */}
         <div className="flex-1 overflow-auto">
           <Routes>
             <Route path="/dashboard" element={<Dashboard />} />
@@ -215,7 +164,29 @@ const MainLayout = () => {
   );
 };
 
-// Public Routes Component
+const ProtectedRoute = ({ children }) => {
+  const [loading, setLoading] = useState(true);
+  const [user, setUser] = useState(null);
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      setUser(user);
+      setLoading(false);
+    });
+    return () => unsubscribe();
+  }, []);
+
+  if (loading) {
+    return <LoadingSpinner />;
+  }
+
+  if (!user) {
+    return <Navigate to="/" replace />;
+  }
+
+  return children;
+};
+
 const PublicRoute = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -225,16 +196,11 @@ const PublicRoute = ({ children }) => {
       setUser(user);
       setLoading(false);
     });
-
     return () => unsubscribe();
   }, []);
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
-      </div>
-    );
+    return <LoadingSpinner />;
   }
 
   if (user) {
@@ -244,25 +210,39 @@ const PublicRoute = ({ children }) => {
   return children;
 };
 
-// Main App Component
-const App = () => {
-  const [loading, setLoading] = useState(true);
+const AppContent = () => {
+  const location = useLocation();
+  const [showPreloader, setShowPreloader] = useState(false);
+  const [lastAuthPath, setLastAuthPath] = useState(null);
+
   useEffect(() => {
-    // Show preloader for 1 second
-    const timer = setTimeout(() => {
-      setLoading(false);
-    }, 4000);
+    const isAuthPath = location.pathname === '/' || location.pathname === '/register';
+    const isMainLayoutPath = location.pathname.startsWith('/dashboard') || 
+                            location.pathname.startsWith('/mymusic') ||
+                            location.pathname.startsWith('/upload') ||
+                            location.pathname.startsWith('/rights') ||
+                            location.pathname.startsWith('/collaborators') ||
+                            location.pathname.startsWith('/license-manager') ||
+                            location.pathname.startsWith('/crowdfunding') ||
+                            location.pathname.startsWith('/streaming') ||
+                            location.pathname.startsWith('/issues');
 
-    return () => clearTimeout(timer);
-  }, []);
+    if (isAuthPath) {
+      setLastAuthPath(location.pathname);
+    } else if (isMainLayoutPath && lastAuthPath) {
+      setShowPreloader(true);
+      const timer = setTimeout(() => {
+        setShowPreloader(false);
+        setLastAuthPath(null);
+      }, 4000);
+      return () => clearTimeout(timer);
+    }
+  }, [location.pathname, lastAuthPath]);
 
-  if (loading) {
-    return <Preloader />;
-  }
   return (
-    <Router>
+    <>
+      {showPreloader && <Preloader />}
       <Routes>
-        {/* Public Routes */}
         <Route
           path="/"
           element={
@@ -279,8 +259,6 @@ const App = () => {
             </PublicRoute>
           }
         />
-        
-        {/* Protected Routes */}
         <Route
           path="/*"
           element={
@@ -290,6 +268,15 @@ const App = () => {
           }
         />
       </Routes>
+    </>
+  );
+};
+
+// Main App component
+const App = () => {
+  return (
+    <Router>
+      <AppContent />
     </Router>
   );
 };
