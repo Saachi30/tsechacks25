@@ -29,7 +29,7 @@ import GTranslate from './components/GTranslate';
 import LicenseManager from './pages/LicenseManager';
 import Login from './components/login';
 import Register from './components/register';
-
+import MusicRightsChatbot from './pages/AiAgent';
 // Protected Route Component
 const ProtectedRoute = ({ children }) => {
   const [loading, setLoading] = useState(true);
@@ -196,6 +196,7 @@ const MainLayout = () => {
             <Route path="/issues" element={<Issues />} />
             <Route path="*" element={<Navigate to="/dashboard" replace />} />
           </Routes>
+          <MusicRightsChatbot/>
         </div>
       </div>
     </div>

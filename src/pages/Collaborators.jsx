@@ -6,18 +6,20 @@ const CONTRACT_ADDRESS = "0x8Ab34d6DE6Bc0144b18183d5ff6B530DE1a95638";
 const CONTRACT_ABI = abi;
 
 export const Collaborators = () => {
+  const [activeTab, setActiveTab] = useState('collaborators');
   const [collaborations, setCollaborations] = useState([]);
   const [showModal, setShowModal] = useState(false);
   const [musics, setMusics] = useState([]);
   const [selectedMusic, setSelectedMusic] = useState(null);
   const [selectedMusicDetails, setSelectedMusicDetails] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [smtBalance, setSmtBalance] = useState('0');
+  const [distributionAmount, setDistributionAmount] = useState('');
   const [formData, setFormData] = useState({
     collaborators: [''],
     royaltySplits: ['']
   });
 
-  // Connect to contract
   const getContract = async () => {
     if (typeof window.ethereum !== 'undefined') {
       const provider = new ethers.providers.Web3Provider(window.ethereum);
@@ -27,7 +29,19 @@ export const Collaborators = () => {
     return null;
   };
 
-  // Fetch all music details
+  const fetchSmtBalance = async () => {
+    try {
+      const contract = await getContract();
+      if (!contract) return;
+      
+      const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+      const balance = await contract.stableMusicToken().balanceOf(accounts[0]);
+      setSmtBalance(ethers.utils.formatEther(balance));
+    } catch (error) {
+      console.error("Error fetching SMT balance:", error);
+    }
+  };
+
   const fetchMusicDetails = async () => {
     try {
       const contract = await getContract();
@@ -53,7 +67,6 @@ export const Collaborators = () => {
           }
           musicId++;
         } catch (error) {
-          // Break the loop if we get an error (likely means we've reached the end of valid music entries)
           break;
         }
       }
@@ -62,6 +75,26 @@ export const Collaborators = () => {
       await fetchCollaborations(musicDetails);
     } catch (error) {
       console.error("Error fetching music details:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDistributeRoyalties = async (musicId) => {
+    try {
+      const contract = await getContract();
+      if (!contract) return;
+
+      setLoading(true);
+      const amount = ethers.utils.parseEther(distributionAmount);
+      const tx = await contract.distributeRoyalties(musicId, amount);
+      await tx.wait();
+      
+      await fetchMusicDetails();
+      await fetchSmtBalance();
+      setDistributionAmount('');
+    } catch (error) {
+      console.error("Error distributing royalties:", error);
     } finally {
       setLoading(false);
     }
@@ -190,10 +223,43 @@ export const Collaborators = () => {
   // Rest of the JSX remains the same as in your original code
   return (
     <div className="p-6">
-      <h1 className="text-2xl font-bold mb-2">Collaborators</h1>
-      <p className="text-gray-600 mb-6">Manage your music collaborations and royalty splits</p>
+    <div className="flex justify-between items-center mb-6">
+      <h1 className="text-2xl font-bold">Music Rights Management</h1>
+      <div className="bg-blue-50 p-3 rounded-lg">
+        <span className="text-blue-800 font-semibold">SMT Balance: </span>
+        <span className="text-blue-600">{smtBalance} SMT</span>
+      </div>
+    </div>
 
-      <div className="bg-white rounded-lg shadow overflow-hidden">
+    <div className="mb-6">
+      <div className="border-b border-gray-200">
+        <nav className="flex space-x-8">
+          <button
+            onClick={() => setActiveTab('collaborators')}
+            className={`py-4 px-1 border-b-2 font-medium text-sm ${
+              activeTab === 'collaborators'
+                ? 'border-blue-500 text-blue-600'
+                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+            }`}
+          >
+            Collaborators
+          </button>
+          <button
+            onClick={() => setActiveTab('royalties')}
+            className={`py-4 px-1 border-b-2 font-medium text-sm ${
+              activeTab === 'royalties'
+                ? 'border-blue-500 text-blue-600'
+                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+            }`}
+          >
+            Distribute Royalties
+          </button>
+        </nav>
+      </div>
+    </div>
+
+    {activeTab === 'collaborators' ? (
+      <div className="bg-white rounded-lg shadow">
         <div className="p-4 border-b bg-gray-50">
           <div className="flex justify-between items-center">
             <h2 className="font-semibold">Active Collaborations</h2>
@@ -258,8 +324,57 @@ export const Collaborators = () => {
             </tbody>
           </table>
         )}
+      
+</div>
+) : (
+  <div className="bg-white rounded-lg shadow">
+    <div className="p-4 border-b bg-gray-50">
+      <h2 className="font-semibold">Distribute Royalties</h2>
+    </div>
+    <div className="p-6">
+      <div className="grid gap-6">
+        {musics.map((music) => (
+          <div key={music.id} className="border rounded-lg p-4 bg-gray-50">
+            <div className="grid grid-cols-2 gap-4 mb-4">
+              <div>
+                <h3 className="font-medium text-lg">{music.title}</h3>
+                <p className="text-gray-600">Genre: {music.genre}</p>
+                <p className="text-gray-600">Artist: {music.artist}</p>
+              </div>
+              <div>
+                <p className="text-gray-600">Current Revenue: {music.revenue} ETH</p>
+                <p className="text-gray-600">
+                  Collaborators: {music.collaborators.length}
+                </p>
+              </div>
+            </div>
+            <div className="flex gap-4 items-end">
+              <div className="flex-1">
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Distribution Amount (SMT)
+                </label>
+                <input
+                  type="number"
+                  value={distributionAmount}
+                  onChange={(e) => setDistributionAmount(e.target.value)}
+                  className="w-full p-2 border rounded"
+                  placeholder="Enter amount"
+                />
+              </div>
+              <button
+                onClick={() => handleDistributeRoyalties(music.id)}
+                disabled={loading || !distributionAmount}
+                className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:bg-gray-400"
+              >
+                {loading ? 'Distributing...' : 'Distribute'}
+              </button>
+            </div>
+          </div>
+        ))}
       </div>
-
+    </div>
+  </div>
+)}
       {showModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
           <div className="bg-white rounded-lg p-6 w-full max-w-lg">
