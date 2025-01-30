@@ -2,6 +2,8 @@ import React, { useEffect, useState, useRef } from 'react';
 import { collection, query, getDocs, addDoc, doc, updateDoc, arrayUnion } from 'firebase/firestore';
 import { db } from '../components/firebase';
 import { Play, Pause, Plus, Music2, SkipForward, SkipBack, Search, X } from 'lucide-react';
+import stream from '../assets/stream.png'
+import wave from '../assets/wave.mov'
 
 const WaveformBackground = () => (
   <svg className="absolute inset-0 w-full h-full opacity-10" viewBox="0 0 100 20">
@@ -316,8 +318,13 @@ export const Streaming = () => {
           </div>
         </div>
 
-        {/* Right Column: Featured Image */}
-        <div className="relative aspect-square rounded-2xl overflow-hidden bg-gradient-to-br from-blue-500/20 to-purple-500/20">
+        <div className="relative aspect-square pr-5 rounded-2xl w-5/6 bg-blend-overlay pb-14 overflow-hidden bg-gradient-to-br from-blue-500/20 to-purple-500/20 ml-auto mr-5">
+    
+          <img
+            src={stream}
+            alt="Featured"
+            className="w-full h-full object-cover opacity-75"
+          />
           <div className="absolute inset-0 bg-gradient-to-t from-slate-900/80 to-transparent" />
           <div className="absolute bottom-0 left-0 p-6">
             <h1 className="text-4xl font-bold mb-2">Your Music</h1>
@@ -325,7 +332,6 @@ export const Streaming = () => {
           </div>
         </div>
       </div>
-
       {/* Songs List */}
       <div className="space-y-4 mb-24">
         <h2 className="text-2xl font-bold mb-4">All Songs</h2>
@@ -335,6 +341,16 @@ export const Streaming = () => {
               key={song.id}
               className="relative overflow-hidden group bg-white/5 hover:bg-white/10 rounded-lg p-4 transition-all"
             >
+               {/* Video Background */}
+            {currentSong?.id === song.id && isPlaying && (
+              <video
+                className="absolute inset-0 w-full h-full object-cover opacity-30 z-5"
+                src={wave}
+                autoPlay
+                loop
+                muted
+              />
+            )}
               <div className="relative flex items-center justify-between">
                 <div className="flex-1">
                   <h3 className="font-semibold text-lg">{song.songName}</h3>

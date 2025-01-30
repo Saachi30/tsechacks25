@@ -485,7 +485,7 @@ export const UploadMusic = () => {
           <button
             type="submit"
             disabled={uploading || checking}
-            className="w-full px-4 py-2 text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed"
+            className="w-full px-4 py-2 text-white bg-gradient-to-r from-blue-800 to-blue-500 rounded-lg hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed"
           >
             {checking ? 'Checking Plagiarism...' : uploading ? 'Uploading...' : 'Upload to IPFS & Register'}
           </button>

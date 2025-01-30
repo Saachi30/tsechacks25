@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { ethers } from 'ethers';
 import abi from '../abi.json';
+import { Music, Wallet, Search, TrendingUp, Clock } from 'lucide-react';
+import croudfunding from '../assets/croudfunding.png'
 const CONTRACT_ABI = abi;
 const SMT_TOKEN_ADDRESS = "0xA06E0542a9bd269fd5886436993019fE35bf3d2F";
 const CONTRACT_ADDRESS = "0x8Ab34d6DE6Bc0144b18183d5ff6B530DE1a95638";
@@ -153,7 +155,7 @@ export const Crowdfunding = () => {
   };
 
   return (
-    <div className="min-h-screen bg-blue-50 p-6">
+    <div className="min-h-screen bg-blue-0 p-6">
       <div className="max-w-7xl mx-auto">
         <div className="flex justify-between items-center mb-8">
           <div>
@@ -194,7 +196,41 @@ export const Crowdfunding = () => {
             </div>
           </div>
         )}
-
+{/* Empty State */}
+{campaigns.length === 0 && (
+          <div className="text-center py-6 ">
+            <div className="bg-white rounded-3xl p-4 shadow-xl max-w-4xl mx-auto">
+              <img 
+                src={croudfunding}
+                alt="Music Crowdfunding"
+                className="mx-auto mb-8 rounded-2xl"
+              />
+              <h2 className="text-2xl font-bold text-gray-900 mb-4">
+                Discover and Support Amazing Music Projects
+              </h2>
+              <p className="text-gray-600 mb-8">
+                Enter a Music ID to explore crowdfunding campaigns or start your own. Join our community in supporting independent artists and bringing new music to life.
+              </p>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div className="p-4 bg-blue-50 rounded-xl">
+                  <TrendingUp className="w-8 h-8 text-blue-600 mb-2" />
+                  <h3 className="font-semibold mb-1">Support Artists</h3>
+                  <p className="text-sm text-gray-600">Fund your favorite music projects</p>
+                </div>
+                <div className="p-4 bg-purple-50 rounded-xl">
+                  <Music className="w-8 h-8 text-purple-600 mb-2" />
+                  <h3 className="font-semibold mb-1">Create Campaigns</h3>
+                  <p className="text-sm text-gray-600">Launch your music project</p>
+                </div>
+                <div className="p-4 bg-indigo-50 rounded-xl">
+                  <Clock className="w-8 h-8 text-indigo-600 mb-2" />
+                  <h3 className="font-semibold mb-1">Track Progress</h3>
+                  <p className="text-sm text-gray-600">Monitor funding in real-time</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {campaigns.map((campaign) => (
             <div key={campaign.id} className="bg-white rounded-xl shadow-lg overflow-hidden transition-transform hover:scale-[1.02]">
