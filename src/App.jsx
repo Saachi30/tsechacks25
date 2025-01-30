@@ -29,7 +29,20 @@ import GTranslate from './components/GTranslate';
 import LicenseManager from './pages/LicenseManager';
 import Login from './components/login';
 import Register from './components/register';
-import MusicRightsChatbot from './pages/AiAgent';
+import preloaderAnimation from './assets/Animation.gif';
+
+const Preloader = () => {
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#0D1117]">
+      <img 
+        src={preloaderAnimation} 
+        alt="Loading..." 
+        className="w-1/4 h-auto max-w-full max-h-full"
+      />
+    </div>
+  );
+};
+
 // Protected Route Component
 const ProtectedRoute = ({ children }) => {
   const [loading, setLoading] = useState(true);
@@ -196,7 +209,6 @@ const MainLayout = () => {
             <Route path="/issues" element={<Issues />} />
             <Route path="*" element={<Navigate to="/dashboard" replace />} />
           </Routes>
-          <MusicRightsChatbot/>
         </div>
       </div>
     </div>
@@ -234,6 +246,19 @@ const PublicRoute = ({ children }) => {
 
 // Main App Component
 const App = () => {
+  const [loading, setLoading] = useState(true);
+  useEffect(() => {
+    // Show preloader for 1 second
+    const timer = setTimeout(() => {
+      setLoading(false);
+    }, 4000);
+
+    return () => clearTimeout(timer);
+  }, []);
+
+  if (loading) {
+    return <Preloader />;
+  }
   return (
     <Router>
       <Routes>

@@ -118,7 +118,7 @@ export const MyMusic = () => {
                 >
                   View Details
                 </button>
-                <button className="px-4 py-2 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors text-gray-700">
+                <button className="px-4 py-2 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors text-gray-700 "onClick={() => navigate("/rights")}>
                   Manage Rights
                 </button>
               </div>
