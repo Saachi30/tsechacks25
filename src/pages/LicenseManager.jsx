@@ -121,7 +121,22 @@ const LicenseManager = () => {
   };
 
   return (
-    <div className="min-h-screen bg-white p-8">
+    <div className=" p-8 min-h-screen bg-blue-50 relative overflow-hidden">
+       {/* Decorative SVG Elements */}
+    <div className="absolute top-0 left-0 w-64 h-64 opacity-10">
+      <svg viewBox="0 0 100 100">
+        <circle cx="50" cy="50" r="40" className="fill-blue-500" />
+        <path d="M50 10 A40 40 0 0 1 90 50" fill="none" stroke="currentColor" className="stroke-blue-600" strokeWidth="2" />
+      </svg>
+    </div>
+    
+    <div className="absolute bottom-0 right-0 w-96 h-96 opacity-10 transform rotate-180">
+      <svg viewBox="0 0 100 100">
+        <circle cx="50" cy="50" r="45" className="fill-blue-400" />
+        <path d="M20 50 Q50 20 80 50" fill="none" stroke="currentColor" className="stroke-blue-500" strokeWidth="3" />
+      </svg>
+    </div>
+
       <div className="max-w-4xl mx-auto">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -242,7 +257,7 @@ const LicenseManager = () => {
             <button
               type="submit"
               disabled={loading}
-              className="w-full py-3 px-6 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-lg font-semibold transform hover:scale-105 transition-all duration-300 disabled:opacity-50"
+              className="w-full py-3 px-6 bg-gradient-to-r from-blue-800 to-blue-500 text-white rounded-lg font-semibold transform hover:scale-105 transition-all duration-300 disabled:opacity-50"
             >
               {loading ? 'Creating License...' : 'Create License'}
             </button>
@@ -261,7 +276,7 @@ const LicenseManager = () => {
               />
               <button
                 onClick={getLicenseDetails}
-                className="px-6 py-2 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-lg font-semibold transform hover:scale-105 transition-all duration-300"
+                className="px-6 py-2 bg-gradient-to-r from-blue-800 to-blue-500 text-white rounded-lg font-semibold transform hover:scale-105 transition-all duration-300"
               >
                 Get Details
               </button>

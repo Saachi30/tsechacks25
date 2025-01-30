@@ -290,7 +290,7 @@ export const RightsManagement = () => {
   const displayData = activeTab === 'owned' ? ownedSongs : rightsRequests;
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="p-6 space-y-6 bg-blue-50">
       <div className="flex justify-between items-center">
         <h1 className="text-2xl font-bold">Rights Management</h1>
         <button

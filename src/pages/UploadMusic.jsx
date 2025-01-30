@@ -382,15 +382,16 @@ export const UploadMusic = () => {
             </div>
           )}
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700">
+          <div >
+            <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center">
+              
               Song Name
             </label>
             <input
               type="text"
               value={formData.songName}
               onChange={(e) => setFormData({ ...formData, songName: e.target.value })}
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+              className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
               required
             />
           </div>
@@ -404,13 +405,13 @@ export const UploadMusic = () => {
                 type="email"
                 value={artistEmail}
                 onChange={(e) => setArtistEmail(e.target.value)}
-                className="flex-1 rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                 className="flex-1 px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 placeholder="Artist email"
               />
               <select
                 value={artistRole}
                 onChange={(e) => setArtistRole(e.target.value)}
-                className="flex-1 rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                className="flex-1 px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               >
                 <option value="">Select Role</option>
                 {roleOptions.map(role => (
@@ -420,7 +421,7 @@ export const UploadMusic = () => {
               <button
                 type="button"
                 onClick={addArtistField}
-                className="px-3 py-2 text-blue-600 hover:text-blue-800"
+                 className="px-4 py-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
               >
                 Add
               </button>
@@ -452,7 +453,7 @@ export const UploadMusic = () => {
               type="text"
               value={formData.genre}
               onChange={(e) => setFormData({ ...formData, genre: e.target.value })}
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+             className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               required
             />
           </div>
